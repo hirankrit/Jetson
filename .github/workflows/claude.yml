@@ -18,6 +18,9 @@ jobs:
       pull-requests: write
       id-token: write
 
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -31,5 +34,3 @@ jobs:
             "${{ github.event.comment.body }}"
 
             กรุณาตอบคำถามหรือทำตามที่ผู้ใช้ขอ
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
