@@ -80,6 +80,13 @@
 - **Phase 2 (Week 5-6)**: ROS2 Integration
 - **Phase 3-5 (Week 7-12)**: Robot Arms + Full System
 
+### 12. [**Claude Skills**](docs/12_claude_skills.md) 🤖 **ใหม่!**
+- **Skills สำหรับ Claude Code CLI**: ชุดคำสั่งที่ช่วยให้ทำงานสม่ำเสมอ
+- **thai-commit**: สร้าง commit message ภาษาไทย
+- **weekly-report**: สร้างรายงานประจำสัปดาห์
+- **ros2-review**: รีวิวโค้ด ROS2 + Python ตามมาตรฐาน
+- **python-tools**: เครื่องมือ linting, type check, logging
+
 ### 8. [Tools & Monitoring](docs/08_tools_monitoring.md)
 - RViz2 visualization setup
 - RQT tools (rqt_graph, rqt_plot)
@@ -265,6 +272,12 @@ git reset --hard HEAD
 /home/jay/Project/
 ├── plan1                    # Initial conversation history
 ├── claude.md               # This file (main index)
+├── .claude/                # Claude Code CLI configuration
+│   └── skills/             # Claude Skills (custom instructions)
+│       ├── thai-commit.md
+│       ├── weekly-report.md
+│       ├── ros2-review.md
+│       └── python-tools.md
 └── docs/                   # Detailed documentation
     ├── 01_hardware_architecture.md
     ├── 02_software_architecture.md
@@ -276,7 +289,8 @@ git reset --hard HEAD
     ├── 08_tools_monitoring.md
     ├── 09_challenges_solutions.md
     ├── 10_setup_guide.md
-    └── 11_vision_first_roadmap.md ⭐  # Vision-First approach (แนะนำ)
+    ├── 11_vision_first_roadmap.md ⭐  # Vision-First approach (แนะนำ)
+    └── 12_claude_skills.md 🤖         # Claude Skills documentation (ใหม่!)
 ```
 
 ---
