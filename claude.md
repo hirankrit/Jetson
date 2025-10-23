@@ -114,27 +114,39 @@
 
 ## 🎯 Current Status
 
-**Last Updated**: 2025-10-22
+**Last Updated**: 2025-10-23
 
 ### Development Approach
 **เลือกใช้**: [Vision-First Roadmap](docs/11_vision_first_roadmap.md) ⭐
 
 ### Project Phase (Vision-First)
 - [x] ออกแบบ overall architecture เสร็จสมบูรณ์
-- [ ] **Phase 1: Vision System (Week 1-4)** ← กำลังจะเริ่ม
-  - [ ] Week 1: Stereo calibration + depth map
+- [x] ตั้งค่า Git repository และ GitHub
+- [x] สร้าง Claude Skills สำหรับ development workflow
+- [ ] **Phase 1: Vision System (Week 1-4)** ← กำลังทำ
+  - [x] Week 1: Stereo camera setup
+    - [x] ตรวจสอบ hardware (Jetson Orin Nano + IMX219 Stereo)
+    - [x] สร้าง enable script สำหรับ dual camera
+    - [x] สร้าง test script สำหรับ stereo camera
+    - [ ] รัน setup script และ reboot
+    - [ ] ทดสอบ capture ภาพจาก 2 กล้อง
+  - [ ] Week 1 (ต่อ): Stereo calibration + depth map
   - [ ] Week 2: Dataset collection (500-1000 images)
   - [ ] Week 3: YOLO training + evaluation
   - [ ] Week 4: Integration (detection + 3D positioning)
 - [ ] Phase 2: ROS2 Integration (Week 5-6)
 - [ ] Phase 3-5: Robot Arms + Full System (Week 7-12)
 
-### Next Actions (Phase 1 - Week 1)
-1. ⚙️ Setup IMX219 Stereo Camera + Jetson
-2. 📸 ทดสอบ capture ภาพจาก 2 กล้อง
-3. 🎯 Stereo calibration (collect 30+ checkerboard images)
-4. 📊 Generate depth map และรายงานผล calibration
-5. 📝 **Output**: รายงาน Week 1 (calibration quality + depth accuracy)
+### Next Actions (กำลังทำ)
+1. ✅ Setup development environment
+2. ✅ ตรวจสอบ Jetson hardware และ JetPack version (R36.4.4)
+3. ✅ สร้าง enable_imx219_stereo.sh script
+4. ✅ สร้าง test_stereo_camera.py script
+5. ⏳ รัน enable script และ reboot Jetson
+6. ⏳ ทดสอบ stereo camera capture
+7. 🎯 Stereo calibration (collect 30+ checkerboard images)
+8. 📊 Generate depth map และรายงานผล calibration
+9. 📝 **Output**: รายงาน Week 1 (calibration quality + depth accuracy)
 
 ---
 
