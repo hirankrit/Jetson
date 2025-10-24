@@ -114,7 +114,7 @@
 
 ## 🎯 Current Status
 
-**Last Updated**: 2025-10-24 (20:30)
+**Last Updated**: 2025-10-24 (21:00)
 
 ### Development Approach
 **เลือกใช้**: [Vision-First Roadmap](docs/11_vision_first_roadmap.md) ⭐
@@ -168,7 +168,11 @@
     - [x] ปรับ Focus กล้อง (Left: 176.5, Right: 171.0, Diff: 6.0) ✅
     - [x] ตั้งค่าแสง LED (ซ้ายหน้า, ทะแยง, 10cm) ✅
     - [x] สร้าง CAMERA_SETUP_GUIDE.md (บันทึก focus + lighting) ✅
-    - [ ] **กำลังทำ**: ทดสอบ depth map หลังปรับ focus ใหม่
+    - [x] Capture calibration images 30+ รูป (หลังปรับ focus) ✅
+    - [x] แก้ไข stereo_calibration.py (spacing 16mm) ✅
+    - [x] รัน calibration หลายรอบ ✅
+    - [ ] **ปัญหา**: Baseline = 436mm (ควรเป็น ~60mm) ❌
+    - [ ] **TODO พรุ่งนี้**: วัด pattern spacing จริงๆ + ตรวจสอบคุณภาพภาพ
   - [ ] Week 1 (ต่อ): ประเมินผล + รายงาน
   - [ ] Week 2: Dataset collection (500-1000 images)
   - [ ] Week 3: YOLO training + evaluation
