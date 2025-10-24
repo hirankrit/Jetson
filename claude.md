@@ -114,7 +114,7 @@
 
 ## 🎯 Current Status
 
-**Last Updated**: 2025-10-24 (21:00)
+**Last Updated**: 2025-10-24 (22:00)
 
 ### Development Approach
 **เลือกใช้**: [Vision-First Roadmap](docs/11_vision_first_roadmap.md) ⭐
@@ -171,8 +171,12 @@
     - [x] Capture calibration images 30+ รูป (หลังปรับ focus) ✅
     - [x] แก้ไข stereo_calibration.py (spacing ยืนยัน 18mm) ✅
     - [x] รัน calibration หลายรอบ ✅
+    - [x] ปรับปรุง capture_calibration.py: เพิ่ม detailed lighting parameters ✅
+      - Real-time monitoring: Brightness, Contrast, Over/Under exposure
+      - Status indicators (Green/Yellow/Red)
+      - Detailed logging เมื่อ capture
     - [ ] **ปัญหา**: Baseline = 491mm→436mm (ควรเป็น ~60mm) ❌
-    - [ ] **TODO พรุ่งนี้**: ตรวจสอบคุณภาพภาพ + ความแบนของ pattern + ลอง capture ใหม่
+    - [ ] **TODO พรุ่งนี้**: Capture ใหม่ด้วย lighting monitoring + ตรวจสอบคุณภาพภาพ
   - [ ] Week 1 (ต่อ): ประเมินผล + รายงาน
   - [ ] Week 2: Dataset collection (500-1000 images)
   - [ ] Week 3: YOLO training + evaluation
@@ -211,15 +215,26 @@
 28. ✅ สร้าง test_depth_map_enhanced.py (StereoSGBM + WLS + CLAHE)
 29. ✅ ติดตั้ง PyTorch 2.9.0 + CUDA 12.6 support (~3.2GB)
 30. ✅ ทดสอบ depth map accuracy (30cm, 32cm, 42cm, 54cm)
-31. ✅ ค้นพบ pattern spacing ที่ถูกต้อง = **12mm**
+31. ✅ ยืนยัน pattern spacing ที่ถูกต้อง = **18mm** (วัดจากกระดาษจริง)
 32. ✅ วัดความแม่นยำ depth estimation: 30-32cm ดี (±1cm), 42cm+ แย่
 33. ✅ ปรับ Focus กล้อง: Left 176.5, Right 171.0, Diff 6.0 (excellent!)
 34. ✅ ตั้งค่าแสง LED: ซ้ายหน้า ทะแยงเข้าหาวัตถุ 10cm
 35. ✅ สร้าง CAMERA_SETUP_GUIDE.md (บันทึก focus + lighting settings)
-36. 🎯 **กำลังทำ**: ทดสอบ depth map หลังปรับ focus ใหม่ (ที่ 32cm optimized)
-37. ⏳ **ต่อไป**: หา StereoSGBM parameters ที่ดีที่สุด สำหรับ 30-50cm range
-38. ⏳ ประเมินผล + รายงาน Week 1
-39. 🔧 ติดตั้ง Ultralytics YOLOv8 (optional, สำหรับ Week 3)
+36. ✅ Capture calibration 30+ รูป (หลังปรับ focus)
+37. ✅ รัน stereo_calibration.py → Baseline 436mm ❌ (ควรเป็น 60mm)
+38. ✅ ยืนยัน pattern spacing = 18mm (ไม่เปลี่ยนอีก)
+39. ✅ ปรับปรุง capture_calibration.py: เพิ่ม detailed lighting parameters
+    - Brightness, Contrast, Over/Under exposure monitoring
+    - Real-time status indicators (Green/Yellow/Red)
+    - Detailed logging ทุกครั้งที่ capture
+40. 🎯 **TODO พรุ่งนี้**: Capture calibration ใหม่ด้วย lighting monitoring
+    - ตรวจสอบ focus + lighting status ก่อนถ่าย
+    - เป้าหมาย 30+ ภาพคุณภาพดี (Status: GOOD)
+    - ตรวจสอบความแบนของ pattern
+41. ⏳ รัน stereo_calibration.py ใหม่ → คาดหวัง baseline ~60mm
+42. ⏳ หา StereoSGBM parameters ที่ดีที่สุด สำหรับ 30-50cm range
+43. ⏳ ประเมินผล + รายงาน Week 1
+44. 🔧 ติดตั้ง Ultralytics YOLOv8 (optional, สำหรับ Week 3)
 
 ---
 
@@ -304,6 +319,57 @@
 - ✅ **Working range ปัจจุบัน: 30-35cm** (แม่นยำ ±1-2cm)
 - ⚠️ **ต้องปรับ StereoSGBM parameters** เพื่อขยาย → 30-50cm
 - 🎯 **เป้าหมาย**: Working range 30-50cm สำหรับ pepper sorting
+
+---
+
+### 💡 Lighting Parameters (2025-10-24 evening)
+
+**เครื่องมือ:** `capture_calibration.py` (updated with detailed monitoring)
+
+**Parameters ที่ติดตาม:**
+```
+1. Mean Brightness (0-255)
+   - Good range: 50-200
+   - Too dark: < 50
+   - Too bright: > 200
+
+2. Contrast (Standard Deviation)
+   - Good: > 30
+   - ค่าสูง = แยก pattern ชัดเจน
+
+3. Over-exposed pixels (%)
+   - Good: < 5%
+   - มากเกินไป = สูญเสียรายละเอียด
+
+4. Under-exposed pixels (%)
+   - Good: < 5%
+   - มากเกินไป = มืดเกินไป
+
+5. Brightness Difference (Left-Right)
+   - Good: < 20
+   - ควรสว่างใกล้เคียงกัน
+
+6. Overall Lighting Status
+   - GOOD (Green): ทุก parameter ผ่าน
+   - OK (Yellow): มีปัญหาเล็กน้อย (≤2 issues)
+   - CHECK! (Red): ต้องปรับแสง (>2 issues)
+```
+
+**Why Lighting Matters for Calibration:**
+- ✅ Brightness ดี → Pattern detection แม่นยำ
+- ✅ Contrast สูง → Circle edges ชัดเจน
+- ✅ No over/under exposure → ข้อมูล pixel ครบถ้วน
+- ✅ Consistent (L-R) → Stereo matching ถูกต้อง
+
+**Baseline Calibration Problem (2025-10-24):**
+- ปัญหา: Baseline = 436mm (ควรเป็น 60mm)
+- **ไม่ใช่เพราะ spacing** (ยืนยันแล้ว 18mm ถูกต้อง)
+- **สาเหตุที่เป็นไปได้:**
+  1. ภาพเบลอ (focus เปลี่ยนระหว่าง capture)
+  2. Lighting ไม่สม่ำเสมอ (over/under exposure)
+  3. Pattern ไม่แบน (โค้งงอ)
+  4. Pattern detection ผิดพลาด
+- **วิธีแก้:** Capture ใหม่ด้วย lighting monitoring (ตรวจสอบ Status = GOOD)
 
 ---
 
@@ -434,7 +500,11 @@ git reset --hard HEAD
 ├── stereo_camera.launch.py         # ROS2 launch file
 │
 ├── capture_calibration.py          # Capture calibration images (5×6 pattern)
-├── stereo_calibration.py           # Compute calibration parameters
+│                                   # Features: Focus + Lighting monitoring ⭐
+│                                   # - Real-time: Brightness, Contrast, Exposure
+│                                   # - Status indicators (Green/Yellow/Red)
+│                                   # - Detailed logging
+├── stereo_calibration.py           # Compute calibration parameters (spacing=18mm)
 ├── test_depth_map.py               # Basic depth map testing
 ├── test_depth_map_enhanced.py      # Enhanced (StereoSGBM + WLS + CLAHE) ⭐
 │
@@ -500,9 +570,9 @@ python3 gstreamer_camera_node.py
 
 ---
 
-### 📐 Stereo Calibration (เสร็จแล้ว ✅)
+### 📐 Stereo Calibration
 
-**Pattern**: Asymmetric Circles Grid (5 rows × 6 cols, 33 circles, 18mm spacing)
+**Pattern**: Asymmetric Circles Grid (5 rows × 6 cols, 33 circles, **18mm spacing** - CONFIRMED)
 
 ```bash
 # 1. พิมพ์ calibration pattern ✅
@@ -510,16 +580,27 @@ python3 gstreamer_camera_node.py
 # Settings: Asymmetric Circles, 5×6, 18mm diagonal spacing, 14mm diameter
 # ดูรายละเอียดใน CAMERA_CALIBRATION_GUIDE.md
 
-# 2. เก็บภาพ calibration ✅ (40 ภาพ)
+# 2. เก็บภาพ calibration (แนะนำ 30+ ภาพ) ⭐ NEW FEATURES!
 python3 capture_calibration.py
-# กด 'c' เพื่อถ่าย, 'q' เพื่อออก
+# Features:
+#   - Real-time Focus monitoring (Left, Right, Diff)
+#   - Real-time Lighting monitoring (Brightness, Contrast, Exposure)
+#   - Status indicators: GOOD (Green), OK (Yellow), CHECK! (Red)
+#   - Detailed logging เมื่อ capture
+#
+# Tips:
+#   - ตรวจสอบ Focus: Left ~176.5, Right ~171.0, Diff < 10
+#   - ตรวจสอบ Lighting Status = GOOD/OK ก่อนถ่าย
+#   - กด 'c' เพื่อถ่าย (เฉพาะเมื่อ pattern detected)
+#   - กด 'q' เพื่อออก
 # ภาพจะถูกบันทึกที่ calib_images/left/ และ calib_images/right/
 
-# 3. คำนวณ calibration parameters ✅
+# 3. คำนวณ calibration parameters
 python3 stereo_calibration.py
 # ได้ไฟล์: stereo_calib.yaml และ rectification_maps.npz
+# ตรวจสอบ: Baseline ควรเป็น ~60mm
 
-# 4. ทดสอบ depth map (กำลังทำ 🎯)
+# 4. ทดสอบ depth map
 python3 test_depth_map_enhanced.py
 ```
 
