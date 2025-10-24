@@ -131,22 +131,48 @@ pip3 install \
 
 ### Step 5: Install Camera Drivers
 
-```bash
-# The IMX219 camera should work out-of-box with Jetson
-# Test camera with GStreamer
+**For IMX219 Stereo Camera on Jetson Orin Nano:**
 
-# Test left camera (sensor-id=0)
+```bash
+# 1. Install GStreamer packages (if not already installed)
+sudo apt install -y nvidia-l4t-gstreamer
+
+# 2. Enable IMX219 stereo camera in device tree
+# Use the setup script (see project root)
+./setup_gstreamer_cameras.sh
+
+# 3. Reboot to apply changes
+sudo reboot
+
+# 4. After reboot, verify camera devices
+ls -la /dev/video*
+# Should show: /dev/video0 and /dev/video1
+
+# 5. Test left camera (sensor-id=0)
 gst-launch-1.0 nvarguscamerasrc sensor-id=0 ! \
   'video/x-raw(memory:NVMM),width=1280,height=720,framerate=30/1' ! \
-  nvvidconv ! xvimagesink
+  nvvidconv ! 'video/x-raw,format=BGRx' ! videoconvert ! xvimagesink
 
-# Test right camera (sensor-id=1)
+# 6. Test right camera (sensor-id=1)
 gst-launch-1.0 nvarguscamerasrc sensor-id=1 ! \
   'video/x-raw(memory:NVMM),width=1280,height=720,framerate=30/1' ! \
-  nvvidconv ! xvimagesink
+  nvvidconv ! 'video/x-raw,format=BGRx' ! videoconvert ! xvimagesink
 
 # If cameras work, you should see live video
 # Press Ctrl+C to stop
+```
+
+**Quick Test with Python Viewer:**
+
+```bash
+# View both cameras side-by-side
+python3 view_camera.py
+
+# View single camera
+python3 view_camera.py --single 0  # Left camera
+python3 view_camera.py --single 1  # Right camera
+
+# Controls: 'q' to quit, 's' to save snapshot
 ```
 
 ### Step 6: Camera Calibration

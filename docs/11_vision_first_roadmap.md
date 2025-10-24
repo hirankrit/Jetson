@@ -36,34 +36,29 @@ Phase 5: Optimization (Week 11-12)
 **Goal**: ได้ stereo depth map ที่ดี
 **Output**: รายงานผล calibration + ตัวอย่าง depth map
 
-#### Day 1: Hardware Setup
-- [ ] เชื่อม IMX219 Stereo Camera กับ Jetson
+#### Day 1: Hardware Setup ✅ เสร็จแล้ว!
+- [x] เชื่อม IMX219 Stereo Camera กับ Jetson
+- [x] Enable IMX219 ใน device tree (merge_imx219_dtb.sh)
+- [x] ติดตั้ง GStreamer และ ROS2 Humble
+- [x] สร้าง gstreamer_camera_node.py (ROS2 node)
+- [x] สร้าง view_camera.py (Python viewer)
+- [x] ทดสอบ capture ภาพจาก 2 กล้อง @ 30 fps ✓
 - [ ] ติดตั้ง camera mount (ความสูง 50-80cm)
 - [ ] Setup lighting (LED panels หรือ natural light)
-- [ ] ทดสอบ capture ภาพจาก 2 กล้อง
 
-```python
-# test_camera.py - ทดสอบเบื้องต้น
-import cv2
+**Camera Testing:**
+```bash
+# Quick test with viewer (ใช้แล้ว ✓)
+python3 view_camera.py
 
-# Open cameras
-cap_left = cv2.VideoCapture(0)
-cap_right = cv2.VideoCapture(1)
+# Test with ROS2 node (ใช้แล้ว ✓)
+source /opt/ros/humble/setup.bash
+python3 gstreamer_camera_node.py
 
-while True:
-    ret_left, frame_left = cap_left.read()
-    ret_right, frame_right = cap_right.read()
-
-    if ret_left and ret_right:
-        cv2.imshow('Left', frame_left)
-        cv2.imshow('Right', frame_right)
-
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
-
-cap_left.release()
-cap_right.release()
-cv2.destroyAllWindows()
+# ผลการทดสอบ:
+# ✓ กล้องทั้ง 2 ตัวทำงานปกติ @ 30 fps
+# ✓ Resolution: 1280x720 (default), รองรับถึง 3280x2464
+# ✓ ROS2 topics: /stereo/left/image_raw, /stereo/right/image_raw
 ```
 
 #### Day 2-3: Stereo Calibration
