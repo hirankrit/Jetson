@@ -6,7 +6,7 @@ Computes intrinsic and extrinsic parameters for stereo vision
 Pattern specifications:
 - Rows: 5
 - Columns: 6
-- Diagonal Spacing: 16mm (verified from successful calibration)
+- Diagonal Spacing: 18mm (measured from printed pattern - CONFIRMED)
 - Circle Diameter: 14mm
 - Total circles: 33
 """
@@ -23,7 +23,7 @@ def calibrate_stereo_asymmetric_circles(
     images_right_path,
     pattern_rows=5,
     pattern_cols=6,
-    spacing_mm=16.0,
+    spacing_mm=18.0,
     output_file='stereo_calib.yaml'
 ):
     """
@@ -288,7 +288,7 @@ def main():
         images_right_path='calib_images/right/*.jpg',
         pattern_rows=5,
         pattern_cols=6,
-        spacing_mm=16.0,
+        spacing_mm=18.0,  # CONFIRMED: 18mm measured from printed pattern
         output_file='stereo_calib.yaml'
     )
 

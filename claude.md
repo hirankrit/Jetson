@@ -169,10 +169,10 @@
     - [x] ตั้งค่าแสง LED (ซ้ายหน้า, ทะแยง, 10cm) ✅
     - [x] สร้าง CAMERA_SETUP_GUIDE.md (บันทึก focus + lighting) ✅
     - [x] Capture calibration images 30+ รูป (หลังปรับ focus) ✅
-    - [x] แก้ไข stereo_calibration.py (spacing 16mm) ✅
+    - [x] แก้ไข stereo_calibration.py (spacing ยืนยัน 18mm) ✅
     - [x] รัน calibration หลายรอบ ✅
-    - [ ] **ปัญหา**: Baseline = 436mm (ควรเป็น ~60mm) ❌
-    - [ ] **TODO พรุ่งนี้**: วัด pattern spacing จริงๆ + ตรวจสอบคุณภาพภาพ
+    - [ ] **ปัญหา**: Baseline = 491mm→436mm (ควรเป็น ~60mm) ❌
+    - [ ] **TODO พรุ่งนี้**: ตรวจสอบคุณภาพภาพ + ความแบนของ pattern + ลอง capture ใหม่
   - [ ] Week 1 (ต่อ): ประเมินผล + รายงาน
   - [ ] Week 2: Dataset collection (500-1000 images)
   - [ ] Week 3: YOLO training + evaluation
@@ -232,7 +232,7 @@
   - FOV: **160°** (diagonal) → Wide-angle lens
 - **Calibration Pattern**: Asymmetric Circles Grid (**5 rows × 6 columns, 33 circles**)
   - Generator: [calib.io Pattern Generator](https://calib.io/pages/camera-calibration-pattern-generator)
-  - **Diagonal spacing: 12mm** (measured from printed pattern) ✅
+  - **Diagonal spacing: 18mm** (measured from printed pattern) ✅ **CONFIRMED - DO NOT CHANGE**
   - Horizontal spacing: 26mm (measured)
   - Mounted on: Foam board (flat, rigid)
 - **Robot Arm**: Mini Brazo robótico con Arduino (YouTube reference)
@@ -276,15 +276,21 @@
 - ✅ **CLAHE** ปรับ contrast ก่อน matching
 - 🔮 **Future**: Fish-eye calibration model (สำหรับ FOV > 120°)
 
-**Calibration Results (Final):**
+**Calibration Results (Previous Success):**
 | Parameter | Value | Status |
 |-----------|-------|--------|
-| **Pattern Spacing** | **12.0 mm** | ✅ Measured from printed pattern |
+| **Pattern Spacing** | **18.0 mm** | ✅ Measured from printed pattern - **CONFIRMED** |
 | Left Camera RMS | 0.22 px | ✅ Excellent |
 | Right Camera RMS | 0.20 px | ✅ Excellent |
 | Baseline | 60.57 mm | ✅ Correct (≈60mm spec) |
 | Stereo RMS | 50.79 px | ⚠️ High (normal for wide-angle) |
 | Images Used | 40 pairs | ✅ Good coverage |
+
+**Current Problem (2025-10-24 after focus adjustment):**
+| Parameter | Value | Status |
+|-----------|-------|--------|
+| Baseline | 491mm → 436mm | ❌ Wrong (should be ~60mm) |
+| Issue | **Not spacing!** | Likely: image quality, pattern flatness, or detection error |
 
 **Working Range (Tested):**
 | ระยะ | ค่าที่วัดได้ | Error | สถานะ |
