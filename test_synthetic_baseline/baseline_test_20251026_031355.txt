@@ -1,0 +1,26 @@
+================================================================================
+SYNTHETIC BASELINE TEST RESULTS
+================================================================================
+
+Test Parameters:
+  True Baseline:      60.00 mm
+  Pattern:            Asymmetric Circles 5x6
+  Pattern Spacing:    18.00 mm
+  Number of Poses:    10 (valid: 9)
+  Noise Level:        0.00 pixels
+  Image Size:         1280x720
+  Focal Length:       700.0 pixels
+
+Results:
+  True Baseline:       60.0000 mm
+  Estimated Baseline:  60.0000 mm
+  Error:               -0.0000 mm
+  Error %:             0.00%
+
+Translation Vector:
+  True:      [60.0000, 0.0000, 0.0000]
+  Estimated: [-60.0000, -0.0000, 0.0000]
+
+Calibration Quality:
+  Stereo RMS error: 0.000090 pixels
+  Quality: EXCELLENT (synthetic data)
