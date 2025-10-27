@@ -120,7 +120,7 @@ def main():
 
     window_size = 5
     min_disp = 0
-    num_disp = 16 * 10  # Must be divisible by 16
+    num_disp = 16 * 32  # Must be divisible by 16, increased for 20-50cm range
 
     # Left matcher (StereoSGBM - better for wide-angle)
     left_matcher = cv2.StereoSGBM_create(
