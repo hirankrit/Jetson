@@ -271,6 +271,88 @@
 
 ### 🎓 Calibration Lessons Learned (Week 1)
 
+### ⚠️ CRITICAL LESSON: Asymmetric Circles Grid Spacing Explained
+
+**สิ่งที่ทำให้งานไม่สำเร็จมาก่อน - เข้าใจผิดเรื่อง spacing!** 🚨
+
+**ความเข้าใจผิด:**
+```
+❌ "spacing_mm = 18" = ระยะทางจริงระหว่างวงกลม 2 วง
+```
+
+**ความจริง:**
+```
+✅ "spacing_mm = 18" = ระยะห่างแนวตั้ง (y-axis) ที่ใช้ในสูตรคำนวณตำแหน่ง
+
+ระยะทางจริงระหว่างวงกลม 2 วงที่ใกล้ที่สุด:
+= √(18² + 18²) = 25.46 mm ≈ 25 mm (ไม่ใช่ 18mm!)
+```
+
+**ผลการวัดจาก Pattern ที่พิมพ์ออกมา (ตรวจสอบแล้ว):**
+| สิ่งที่วัด | วัดได้ (mm) | ทฤษฎี (mm) | สถานะ |
+|-----------|------------|-----------|-------|
+| เส้นผ่านศูนย์กลางวงกลม | 14.0 | 14.0 | ✅ |
+| แนวนอน (Row 0: Col 0→Col 1) | 36 | 36.0 | ✅ |
+| แนวตั้ง (y-axis difference) | 18 | 18.0 | ✅ |
+| **ทแยงมุม (วงกลม 2 วงใกล้ที่สุด)** | **25** | **25.46** | ✅ |
+
+**ทำไมถึงเป็นแบบนี้?**
+
+สูตรคำนวณตำแหน่งวงกลม (จาก stereo_calibration.py):
+```python
+for i in range(rows):
+    for j in range(cols):
+        x = (2 * j + i % 2) * spacing_mm  # spacing = 18
+        y = i * spacing_mm                 # spacing = 18
+```
+
+ตำแหน่งจริง:
+```
+Row 0, Col 0 (A): (0, 0)
+Row 0, Col 1 (B): (36, 0)
+Row 1, Col 0 (C): (18, 18) ← เลื่อนขวา 18mm, ลงมา 18mm
+
+ระยะทาง A→C = √(18² + 18²) = 25.46 mm ✅
+```
+
+**วิธีวัด Pattern ที่ถูกต้อง:**
+
+แนะนำ: **วัดแนวนอน แล้วหาร 2**
+```
+Row 0: Col 0 → Col 1 = 36 mm
+→ spacing_mm = 36 / 2 = 18 mm ✅
+```
+
+หรือ: **วัดแนวตั้ง (y-axis difference)**
+```
+Row 0 → Row 1 = 18 mm
+→ spacing_mm = 18 mm ✅
+```
+
+ไม่แนะนำ: **วัดทแยงมุม** (ต้องคำนวณ)
+```
+A → C = 25 mm
+→ spacing_mm = 25 / √2 = 17.68 mm
+```
+
+**บทเรียนสำคัญ:**
+- ✅ **spacing_mm = 18** คือค่าที่ถูกต้องสำหรับ pattern นี้
+- ✅ **ไม่ต้องเปลี่ยน** แม้จะวัดระยะทแยงมุมได้ 25mm
+- ✅ **เอกสารอ้างอิง**: `spacingAsymmetric Circles Grid.txt` (มีรายละเอียดครบถ้วน)
+
+**ทำไมต้องเข้าใจเรื่องนี้?**
+
+ถ้าใช้ spacing ผิด → ทุกการวัดระยะจะผิด!
+```
+ตัวอย่าง: ถ้าคิดว่า spacing = 25mm (จากการวัดทแยงมุม)
+
+Pattern จริง spacing = 18mm
+Code ใช้ spacing = 25mm
+→ Scale error = 25/18 = 1.389 (39% ผิด!)
+→ Baseline 60mm → คำนวณได้ 83mm ❌
+→ ทุกๆ distance จะผิด 39%!
+```
+
 **Pattern Detection:**
 - ⚠️ **สำคัญ**: Pattern ที่พิมพ์มาต้องตรวจสอบขนาดจริง!
   - ตั้งค่าพิมพ์: 5×13 columns
@@ -494,6 +576,7 @@ git reset --hard HEAD
 ├── claude.md                       # This file (main index)
 ├── CAMERA_CALIBRATION_GUIDE.md     # Calibration guide (Asymmetric Circles)
 ├── CAMERA_SETUP_GUIDE.md           # Focus + Lighting setup guide ⭐ NEW!
+├── spacingAsymmetric Circles Grid.txt  # Spacing explained (25mm vs 18mm) 🚨 MUST READ!
 │
 ├── view_camera.py                  # Camera viewer (real-time display)
 ├── gstreamer_camera_node.py        # ROS2 stereo camera node
@@ -511,6 +594,12 @@ git reset --hard HEAD
 ├── debug_pattern.py                # Debug pattern detection
 ├── tune_blob_detector.py           # Interactive blob detector tuning
 ├── test_33_circles.py              # Test 33-circle pattern configurations
+├── test_pattern_detection.py       # Test pattern detection from captured images
+│
+├── generate_synthetic_calibration.py  # Generate synthetic test data 🧪
+├── stereo_calibration_synthetic.py    # Test calibration with synthetic data
+├── SYNTHETIC_CALIBRATION_GUIDE.md     # Synthetic testing guide
+├── CALIBRATION_ANALYSIS.md            # Analysis of capture_calibration.py
 │
 ├── stereo_calib.yaml               # Calibration results (baseline 60.57mm)
 ├── rectification_maps.npz          # Pre-computed rectification maps
@@ -518,6 +607,14 @@ git reset --hard HEAD
 ├── calib_images/                   # Calibration image pairs (40 pairs)
 │   ├── left/
 │   └── right/
+│
+├── calibration_pattern_18mm.svg    # Pattern file (5×6, spacing 18mm) 🎯
+├── calibration_pattern_18mm.html   # HTML preview (พิมพ์ได้เลย!) 🖨️
+├── calibration_pattern_16mm.svg    # Pattern file backup (spacing 16mm)
+├── generate_calibration_pattern.py # Pattern generator (PNG, 300 DPI)
+├── generate_pattern_simple.py      # Simple SVG generator
+├── README_PATTERNS.md              # Pattern printing quick start
+├── PATTERN_PRINTING_GUIDE.md       # Pattern printing detailed guide
 │
 ├── setup_gstreamer_cameras.sh      # Camera setup script
 ├── install_ros2_humble.sh          # ROS2 installation script

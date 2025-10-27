@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="252.0mm" height="126.0mm" viewBox="0 0 252.0 126.0"
+     xmlns="http://www.w3.org/2000/svg">
+
+    <!-- White background -->
+    <rect width="252.0" height="126.0" fill="white"/>
+
+    <!-- Border -->
+    <rect x="1" y="1" width="250.0" height="124.0"
+          fill="none" stroke="gray" stroke-width="1"/>
+
+    <!-- Circles -->
+    <circle cx="27.0" cy="27.0" r="7.0" fill="black"/>
+    <circle cx="63.0" cy="27.0" r="7.0" fill="black"/>
+    <circle cx="99.0" cy="27.0" r="7.0" fill="black"/>
+    <circle cx="135.0" cy="27.0" r="7.0" fill="black"/>
+    <circle cx="171.0" cy="27.0" r="7.0" fill="black"/>
+    <circle cx="207.0" cy="27.0" r="7.0" fill="black"/>
+    <circle cx="45.0" cy="45.0" r="7.0" fill="black"/>
+    <circle cx="81.0" cy="45.0" r="7.0" fill="black"/>
+    <circle cx="117.0" cy="45.0" r="7.0" fill="black"/>
+    <circle cx="153.0" cy="45.0" r="7.0" fill="black"/>
+    <circle cx="189.0" cy="45.0" r="7.0" fill="black"/>
+    <circle cx="225.0" cy="45.0" r="7.0" fill="black"/>
+    <circle cx="27.0" cy="63.0" r="7.0" fill="black"/>
+    <circle cx="63.0" cy="63.0" r="7.0" fill="black"/>
+    <circle cx="99.0" cy="63.0" r="7.0" fill="black"/>
+    <circle cx="135.0" cy="63.0" r="7.0" fill="black"/>
+    <circle cx="171.0" cy="63.0" r="7.0" fill="black"/>
+    <circle cx="207.0" cy="63.0" r="7.0" fill="black"/>
+    <circle cx="45.0" cy="81.0" r="7.0" fill="black"/>
+    <circle cx="81.0" cy="81.0" r="7.0" fill="black"/>
+    <circle cx="117.0" cy="81.0" r="7.0" fill="black"/>
+    <circle cx="153.0" cy="81.0" r="7.0" fill="black"/>
+    <circle cx="189.0" cy="81.0" r="7.0" fill="black"/>
+    <circle cx="225.0" cy="81.0" r="7.0" fill="black"/>
+    <circle cx="27.0" cy="99.0" r="7.0" fill="black"/>
+    <circle cx="63.0" cy="99.0" r="7.0" fill="black"/>
+    <circle cx="99.0" cy="99.0" r="7.0" fill="black"/>
+    <circle cx="135.0" cy="99.0" r="7.0" fill="black"/>
+    <circle cx="171.0" cy="99.0" r="7.0" fill="black"/>
+    <circle cx="207.0" cy="99.0" r="7.0" fill="black"/>
+</svg>
