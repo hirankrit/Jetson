@@ -286,10 +286,18 @@
 49. ✅ สร้าง test_pepper_adaptive.py (Adaptive Percentile method)
 50. ✅ ออกแบบขายึดแสงด้านบน (เพิ่ม center coverage)
 51. ✅ **Week 1 Complete!** Stereo vision system พร้อมใช้งาน!
-52. 🎯 **TODO ต่อไป**: เลือกงาน Week 1-2 ที่ไม่ต้องใช้แสง
-    - Option 1: เขียน Week 1 Report (documentation)
-    - Option 2: เริ่ม Week 2 - Dataset collection planning
-    - Option 3: ติดตั้ง Ultralytics YOLOv8 (prep for Week 3)
+52. ✅ **สร้างเอกสารการสอน Week 1** 📚 (2025-10-27 Evening)
+    - WEEK1_REPORT.md: รายงานฉบับสมบูรณ์ (40+ หน้า)
+    - WEEK1_SLIDES.md: Presentation slides (18 slides)
+53. ✅ **สร้างเอกสารทฤษฎี Stereo Vision** 📖 (ภาษาไทย)
+    - Part 1: บทที่ 1-5 (Camera Model → Rectification)
+    - Part 2: บทที่ 6-8 + ภาคผนวก (Disparity → Applications + Code)
+    - รวม 8 บท, ~160 หน้า, โค้ดตัวอย่าง, แบบฝึกหัด
+54. ✅ Push เอกสารทั้งหมดขึ้น GitHub ✅
+55. 🎯 **TODO ต่อไป**: รอติดแสงด้านบน แล้วเริ่ม Week 2
+    - ⏳ ติดแสง LED ด้านบน
+    - 📊 Dataset collection (Week 2)
+    - 🤖 YOLO training (Week 3)
 
 ---
 
@@ -316,6 +324,18 @@
 - **GStreamer**: [NVIDIA Accelerated GStreamer](https://docs.nvidia.com/jetson/archives/r36.4/DeveloperGuide/SD/Multimedia/AcceleratedGstreamer.html)
 
 ### Learning Resources
+
+**📚 เอกสารทฤษฎีภาษาไทย (โปรเจคนี้)** ⭐ แนะนำ!
+- **THEORY_STEREO_VISION.md**: ทฤษฎี Part 1 (บทที่ 1-5)
+  - Camera Model, Calibration, Epipolar Geometry, Rectification
+- **THEORY_STEREO_VISION_PART2.md**: ทฤษฎี Part 2 (บทที่ 6-8 + ภาคผนวก)
+  - Disparity, Stereo Matching, Applications
+  - โค้ดตัวอย่างครบถ้วน (Calibration, Depth Estimation)
+  - แบบฝึกหัดพร้อมเฉลย
+- **WEEK1_REPORT.md**: รายงาน Week 1 ฉบับสมบูรณ์ (40+ หน้า)
+- **WEEK1_SLIDES.md**: Presentation slides สำหรับสอน (18 slides)
+
+**External Resources**:
 - [ROS2 Tutorials](https://docs.ros.org/en/humble/Tutorials.html)
 - [TensorRT for Jetson](https://developer.nvidia.com/tensorrt)
 - [Arduino Serial Communication](https://www.arduino.cc/reference/en/language/functions/communication/serial/)
@@ -835,10 +855,21 @@ git reset --hard HEAD
 /home/jay/Project/
 ├── plan1                           # Initial conversation history
 ├── claude.md                       # This file (main index)
+│
+├── ============ 📚 Week 1 Documentation (Teaching Materials) ============
+├── WEEK1_REPORT.md                 # Week 1 รายงานฉบับสมบูรณ์ (40+ หน้า) ⭐ NEW!
+├── WEEK1_SLIDES.md                 # Week 1 Presentation slides (18 slides) ⭐ NEW!
+├── THEORY_STEREO_VISION.md         # ทฤษฎี Part 1: บทที่ 1-5 📖 NEW!
+│                                   # (Camera Model, Calibration, Epipolar Geometry, Rectification)
+├── THEORY_STEREO_VISION_PART2.md   # ทฤษฎี Part 2: บทที่ 6-8 + ภาคผนวก 📖 NEW!
+│                                   # (Disparity, Stereo Matching, Applications, Code Examples)
+│
+├── ============ 📋 Calibration Guides ============
 ├── CAMERA_CALIBRATION_GUIDE.md     # Calibration guide (Asymmetric Circles)
-├── CAMERA_SETUP_GUIDE.md           # Focus + Lighting setup guide ⭐ NEW!
+├── CAMERA_SETUP_GUIDE.md           # Focus + Lighting setup guide
 ├── spacingAsymmetric Circles Grid.txt  # Spacing explained (25mm vs 18mm) 🚨 MUST READ!
 │
+├── ============ 🎥 Camera & Vision Tools ============
 ├── view_camera.py                  # Camera viewer (real-time display)
 ├── gstreamer_camera_node.py        # ROS2 stereo camera node
 ├── stereo_camera.launch.py         # ROS2 launch file
