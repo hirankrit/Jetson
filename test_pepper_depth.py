@@ -13,25 +13,39 @@ import yaml
 import time
 
 
-def build_gstreamer_pipeline(sensor_id, width=1280, height=720, framerate=15):
-    """Use same resolution as calibration for correct depth computation"""
+def build_gstreamer_pipeline(
+    sensor_id, width=1280, height=720, framerate=15, exposure_ms=30, gain=2
+):
+    """
+    Use same resolution as calibration for correct depth computation
+
+    MANUAL mode with fixed exposure/gain (prevents flickering)
+    - exposure_ms: Exposure time in milliseconds (default 30ms)
+    - gain: Analog gain 1-16 (default 2)
+    """
+    exposure_ns = int(exposure_ms * 1000000)  # Convert ms to ns
+
     return (
-        f'nvarguscamerasrc sensor-id={sensor_id} ! '
-        f'video/x-raw(memory:NVMM), '
-        f'width=(int){width}, height=(int){height}, '
-        f'format=(string)NV12, framerate=(fraction){framerate}/1 ! '
-        f'nvvidconv flip-method=0 ! '
-        f'video/x-raw, format=(string)BGRx ! '
-        f'videoconvert ! '
-        f'video/x-raw, format=(string)BGR ! '
-        f'appsink'
+        f"nvarguscamerasrc sensor-id={sensor_id} "
+        "wbmode=0 "  # Disable auto white balance
+        f'exposuretimerange="{exposure_ns} {exposure_ns}" '  # Fix exposure
+        f'gainrange="{gain} {gain}" '  # Fix gain
+        "! "
+        "video/x-raw(memory:NVMM), "
+        f"width=(int){width}, height=(int){height}, "
+        f"format=(string)NV12, framerate=(fraction){framerate}/1 ! "
+        "nvvidconv flip-method=0 ! "
+        "video/x-raw, format=(string)BGRx ! "
+        "videoconvert ! "
+        "video/x-raw, format=(string)BGR ! "
+        "appsink"
     )
 
 
 def load_calibration():
-    with open('stereo_calib.yaml', 'r') as f:
+    with open("stereo_calib.yaml", "r") as f:
         calib = yaml.safe_load(f)
-    maps = np.load('rectification_maps.npz')
+    maps = np.load("rectification_maps.npz")
     return calib, maps
 
 
@@ -48,14 +62,14 @@ def compute_depth(left_gray, right_gray, baseline, focal):
         minDisparity=min_disp,
         numDisparities=num_disp,
         blockSize=window_size,
-        P1=8 * 3 * window_size ** 2,
-        P2=32 * 3 * window_size ** 2,
+        P1=8 * 3 * window_size**2,
+        P2=32 * 3 * window_size**2,
         disp12MaxDiff=2,
         uniquenessRatio=12,
         speckleWindowSize=120,
         speckleRange=16,
         preFilterCap=63,
-        mode=cv2.STEREO_SGBM_MODE_SGBM_3WAY
+        mode=cv2.STEREO_SGBM_MODE_SGBM_3WAY,
     )
 
     # Compute disparity
@@ -68,7 +82,7 @@ def compute_depth(left_gray, right_gray, baseline, focal):
         print(f"  Disparity range: {disp_valid.min():.1f} - {disp_valid.max():.1f} px")
         print(f"  Valid disparities: {len(disp_valid)} pixels")
     else:
-        print(f"  ⚠️ WARNING: No valid disparities found!")
+        print("  ⚠️ WARNING: No valid disparities found!")
 
     # Valid mask
     valid_mask = (disparity_float > min_disp) & (disparity_float < num_disp)
@@ -86,12 +100,14 @@ def compute_depth(left_gray, right_gray, baseline, focal):
         valid_depths = depth_map[final_mask]
         print(f"  Depth range: {valid_depths.min():.0f} - {valid_depths.max():.0f} mm")
     else:
-        print(f"  ⚠️ WARNING: No valid depths after filtering!")
+        print("  ⚠️ WARNING: No valid depths after filtering!")
         # Check why
         if valid_mask.any():
             all_depths = depth_map[valid_mask]
-            print(f"     Before filter: {all_depths.min():.0f} - {all_depths.max():.0f} mm")
-            print(f"     Filter range: 150-1200 mm")
+            print(
+                f"     Before filter: {all_depths.min():.0f} - {all_depths.max():.0f} mm"
+            )
+            print("     Filter range: 150-1200 mm")
 
     return depth_map, final_mask
 
@@ -116,8 +132,12 @@ def click_handler(event, x, y, flags, param):
                 if len(clicks) >= 2:
                     values = np.array(clicks)
                     print(f"\n   Last {len(clicks)} measurements:")
-                    print(f"   Average: {values.mean():.1f} mm ({values.mean()/10:.1f} cm)")
-                    print(f"   Std Dev: {values.std():.2f} mm ({values.std()/10:.2f} cm)")
+                    print(
+                        f"   Average: {values.mean():.1f} mm ({values.mean()/10:.1f} cm)"
+                    )
+                    print(
+                        f"   Std Dev: {values.std():.2f} mm ({values.std()/10:.2f} cm)"
+                    )
                     print(f"   Range: {values.min():.1f} - {values.max():.1f} mm")
                     print(f"   Median: {np.median(values):.1f} mm")
             else:
@@ -142,8 +162,8 @@ def main():
     # Load calibration
     print("\n📐 Loading calibration...")
     calib, maps = load_calibration()
-    baseline = calib['baseline_mm']
-    Q = np.array(calib['stereo']['Q_matrix'])
+    baseline = calib["baseline_mm"]
+    Q = np.array(calib["stereo"]["Q_matrix"])
     focal_length = abs(Q[2, 3])
 
     print(f"  Baseline: {baseline:.2f} mm")
@@ -151,23 +171,37 @@ def main():
     print(f"  Calibration resolution: {calib['image_width']}x{calib['image_height']}")
 
     # CRITICAL: Use SAME resolution as calibration!
-    width = calib['image_width']
-    height = calib['image_height']
+    width = calib["image_width"]
+    height = calib["image_height"]
     print(f"  Working resolution: {width}x{height} ✓ (matching calibration)")
 
     # Use original calibration maps (NO resize!)
-    map_left_x = maps['map_left_x']
-    map_left_y = maps['map_left_y']
-    map_right_x = maps['map_right_x']
-    map_right_y = maps['map_right_y']
+    map_left_x = maps["map_left_x"]
+    map_left_y = maps["map_left_y"]
+    map_right_x = maps["map_right_x"]
+    map_right_y = maps["map_right_y"]
 
-    print(f"  Using original calibration parameters (no scaling)")
+    print("  Using original calibration parameters (no scaling)")
     # Focal length is already correct for this resolution
+
+    # Camera settings (MANUAL mode - prevents flickering)
+    # Optimized settings for best coverage and stability
+    exposure_ms = 30  # Exposure time in milliseconds
+    gain = 2  # Analog gain
+    print("\n⚙️  Camera Settings (MANUAL mode):")
+    print(f"  Exposure: {exposure_ms}ms (fixed)")
+    print(f"  Gain: {gain} (fixed)")
+    print("  White Balance: Manual")
+    print("  Note: Optimized for coverage (+81%) and stability")
 
     # Open cameras
     print("\n📷 Opening cameras...")
-    left_pipeline = build_gstreamer_pipeline(0, width, height)
-    right_pipeline = build_gstreamer_pipeline(1, width, height)
+    left_pipeline = build_gstreamer_pipeline(
+        0, width, height, exposure_ms=exposure_ms, gain=gain
+    )
+    right_pipeline = build_gstreamer_pipeline(
+        1, width, height, exposure_ms=exposure_ms, gain=gain
+    )
 
     left_cap = cv2.VideoCapture(left_pipeline, cv2.CAP_GSTREAMER)
     if not left_cap.isOpened():
@@ -197,8 +231,8 @@ def main():
     print("=" * 80)
     print("\n👉 Press SPACE to start...")
 
-    cv2.namedWindow('View', cv2.WINDOW_NORMAL)
-    cv2.resizeWindow('View', 1280, 480)
+    cv2.namedWindow("View", cv2.WINDOW_NORMAL)
+    cv2.resizeWindow("View", 1280, 480)
 
     depth_map = None
     final_mask = None
@@ -215,31 +249,54 @@ def main():
 
         # Show preview
         preview = frame_left.copy()
-        cv2.putText(preview, "Press SPACE to capture", (10, 30),
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
-        cv2.putText(preview, f"Captures: {capture_count}", (10, 65),
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
-        cv2.putText(preview, f"Measurements: {len(clicks)}", (10, 100),
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+        cv2.putText(
+            preview,
+            "Press SPACE to capture",
+            (10, 30),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.8,
+            (0, 255, 0),
+            2,
+        )
+        cv2.putText(
+            preview,
+            f"Captures: {capture_count}",
+            (10, 65),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.8,
+            (0, 255, 0),
+            2,
+        )
+        cv2.putText(
+            preview,
+            f"Measurements: {len(clicks)}",
+            (10, 100),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.8,
+            (0, 255, 0),
+            2,
+        )
 
-        cv2.imshow('View', preview)
+        cv2.imshow("View", preview)
 
         key = cv2.waitKey(1) & 0xFF
 
-        if key == ord('q'):
+        if key == ord("q"):
             break
 
-        elif key == ord(' '):  # SPACE - capture
+        elif key == ord(" "):  # SPACE - capture
             print("\n" + "=" * 80)
             print(f"📸 CAPTURE #{capture_count + 1}")
             print("=" * 80)
 
             # Rectify
             t0 = time.time()
-            rectified_left = cv2.remap(frame_left, map_left_x, map_left_y,
-                                       cv2.INTER_LINEAR)
-            rectified_right = cv2.remap(frame_right, map_right_x, map_right_y,
-                                        cv2.INTER_LINEAR)
+            rectified_left = cv2.remap(
+                frame_left, map_left_x, map_left_y, cv2.INTER_LINEAR
+            )
+            rectified_right = cv2.remap(
+                frame_right, map_right_x, map_right_y, cv2.INTER_LINEAR
+            )
             t1 = time.time()
             print(f"  Rectification: {(t1-t0)*1000:.0f} ms")
 
@@ -260,20 +317,28 @@ def main():
 
             # Stats
             coverage = np.sum(final_mask) / (width * height) * 100
-            left_cov = np.sum(final_mask[:, :width//2]) / (height * width // 2) * 100
-            right_cov = np.sum(final_mask[:, width//2:]) / (height * width // 2) * 100
+            left_cov = np.sum(final_mask[:, : width // 2]) / (height * width // 2) * 100
+            right_cov = (
+                np.sum(final_mask[:, width // 2 :]) / (height * width // 2) * 100
+            )
 
-            print(f"\n📊 Coverage:")
+            print("\n📊 Coverage:")
             print(f"  Overall: {coverage:.1f}%")
             print(f"  Left half: {left_cov:.1f}%")
             print(f"  Right half: {right_cov:.1f}%")
 
             if final_mask.any():
                 valid_depths = depth_map[final_mask]
-                print(f"\n📏 Depth Statistics:")
-                print(f"  Range: {valid_depths.min():.1f} - {valid_depths.max():.1f} mm")
-                print(f"  Mean: {valid_depths.mean():.1f} mm ({valid_depths.mean()/10:.1f} cm)")
-                print(f"  Median: {np.median(valid_depths):.1f} mm ({np.median(valid_depths)/10:.1f} cm)")
+                print("\n📏 Depth Statistics:")
+                print(
+                    f"  Range: {valid_depths.min():.1f} - {valid_depths.max():.1f} mm"
+                )
+                print(
+                    f"  Mean: {valid_depths.mean():.1f} mm ({valid_depths.mean()/10:.1f} cm)"
+                )
+                print(
+                    f"  Median: {np.median(valid_depths):.1f} mm ({np.median(valid_depths)/10:.1f} cm)"
+                )
                 print(f"  Std Dev: {valid_depths.std():.1f} mm")
 
             # Visualize depth
@@ -285,32 +350,47 @@ def main():
             depth_colored[~final_mask] = [0, 0, 0]
 
             # Add text overlay
-            cv2.putText(depth_colored, f"Coverage: {coverage:.1f}%",
-                       (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
-            cv2.putText(depth_colored, "Click to measure",
-                       (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+            cv2.putText(
+                depth_colored,
+                f"Coverage: {coverage:.1f}%",
+                (10, 30),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.7,
+                (255, 255, 255),
+                2,
+            )
+            cv2.putText(
+                depth_colored,
+                "Click to measure",
+                (10, 60),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.7,
+                (255, 255, 255),
+                2,
+            )
 
             # Combine left image and depth map
             combined = np.hstack([rectified_left, depth_colored])
 
-            cv2.imshow('View', combined)
+            cv2.imshow("View", combined)
 
             # Reset clicks for new capture
             clicks = []
 
             # Set mouse callback
-            cv2.setMouseCallback('View', click_handler,
-                               (depth_map, final_mask, clicks, width))
+            cv2.setMouseCallback(
+                "View", click_handler, (depth_map, final_mask, clicks, width)
+            )
 
             capture_count += 1
 
             print("\n👆 Click on the image to measure depth")
 
-        elif key == ord('r'):  # Reset clicks
+        elif key == ord("r"):  # Reset clicks
             clicks = []
             print("\n🔄 Measurements reset")
 
-        elif key == ord('s') and depth_map is not None:  # Save
+        elif key == ord("s") and depth_map is not None:  # Save
             timestamp = int(time.time())
             cv2.imwrite(f"pepper_{timestamp}_left.jpg", rectified_left)
             cv2.imwrite(f"pepper_{timestamp}_depth.jpg", depth_colored)
@@ -325,5 +405,5 @@ def main():
     print("=" * 80)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

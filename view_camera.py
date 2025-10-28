@@ -11,40 +11,68 @@ import argparse
 from datetime import datetime
 
 
-def build_gstreamer_pipeline(sensor_id, width=1280, height=720, framerate=30, flip_method=0):
+def build_gstreamer_pipeline(
+    sensor_id,
+    width=1280,
+    height=720,
+    framerate=15,
+    exposure_ms=30,
+    gain=2,
+    flip_method=0,
+):
     """
     Build GStreamer pipeline for nvarguscamerasrc
+
+    MANUAL mode with fixed exposure/gain (prevents flickering)
 
     Args:
         sensor_id: Camera sensor ID (0 or 1)
         width: Image width
         height: Image height
         framerate: Frames per second
+        exposure_ms: Exposure time in milliseconds (default 30ms)
+        gain: Analog gain 1-16 (default 2)
         flip_method: Flip method (0=none, 2=rotate-180)
 
     Returns:
         GStreamer pipeline string
     """
+    exposure_ns = int(exposure_ms * 1000000)  # Convert ms to ns
+
     return (
-        f'nvarguscamerasrc sensor-id={sensor_id} ! '
-        f'video/x-raw(memory:NVMM), '
-        f'width=(int){width}, height=(int){height}, '
-        f'format=(string)NV12, framerate=(fraction){framerate}/1 ! '
-        f'nvvidconv flip-method={flip_method} ! '
-        f'video/x-raw, format=(string)BGRx ! '
-        f'videoconvert ! '
-        f'video/x-raw, format=(string)BGR ! '
-        f'appsink'
+        f"nvarguscamerasrc sensor-id={sensor_id} "
+        "wbmode=0 "  # Disable auto white balance
+        f'exposuretimerange="{exposure_ns} {exposure_ns}" '  # Fix exposure
+        f'gainrange="{gain} {gain}" '  # Fix gain
+        "! "
+        "video/x-raw(memory:NVMM), "
+        f"width=(int){width}, height=(int){height}, "
+        f"format=(string)NV12, framerate=(fraction){framerate}/1 ! "
+        f"nvvidconv flip-method={flip_method} ! "
+        "video/x-raw, format=(string)BGRx ! "
+        "videoconvert ! "
+        "video/x-raw, format=(string)BGR ! "
+        "appsink"
     )
 
 
 def main():
-    parser = argparse.ArgumentParser(description='View IMX219 Stereo Camera')
-    parser.add_argument('--width', type=int, default=1280, help='Image width (default: 1280)')
-    parser.add_argument('--height', type=int, default=720, help='Image height (default: 720)')
-    parser.add_argument('--fps', type=int, default=30, help='Framerate (default: 30)')
-    parser.add_argument('--flip', type=int, default=0, help='Flip method (0=none, 2=rotate-180)')
-    parser.add_argument('--single', type=int, help='View single camera only (0 or 1)')
+    parser = argparse.ArgumentParser(description="View IMX219 Stereo Camera")
+    parser.add_argument(
+        "--width", type=int, default=1280, help="Image width (default: 1280)"
+    )
+    parser.add_argument(
+        "--height", type=int, default=720, help="Image height (default: 720)"
+    )
+    parser.add_argument("--fps", type=int, default=15, help="Framerate (default: 15)")
+    parser.add_argument(
+        "--exposure", type=int, default=30, help="Exposure in ms (default: 30)"
+    )
+    parser.add_argument("--gain", type=float, default=2, help="Gain 1-16 (default: 2)")
+    parser.add_argument(
+        "--flip", type=int, default=0, help="Flip method (0=none, 2=rotate-180)"
+    )
+    parser.add_argument("--single", type=int, help="View single camera only (0 or 1)")
 
     args = parser.parse_args()
 
@@ -53,6 +81,11 @@ def main():
     print("=" * 60)
     print(f"Resolution: {args.width}x{args.height} @ {args.fps} fps")
     print(f"Flip method: {args.flip}")
+    print("\n⚙️  Camera Settings (MANUAL mode):")
+    print(f"  Exposure: {args.exposure}ms (fixed)")
+    print(f"  Gain: {args.gain} (fixed)")
+    print("  White Balance: Manual")
+    print("  Note: Optimized for coverage (+81%) and stability")
     print("\nControls:")
     print("  'q' or ESC : Quit")
     print("  's'        : Save snapshot")
@@ -61,7 +94,15 @@ def main():
     # Build pipelines
     if args.single is not None:
         # Single camera mode
-        pipeline = build_gstreamer_pipeline(args.single, args.width, args.height, args.fps, args.flip)
+        pipeline = build_gstreamer_pipeline(
+            args.single,
+            args.width,
+            args.height,
+            args.fps,
+            args.exposure,
+            args.gain,
+            args.flip,
+        )
         print(f"\nOpening camera {args.single}...")
         cap = cv2.VideoCapture(pipeline, cv2.CAP_GSTREAMER)
 
@@ -83,17 +124,31 @@ def main():
             frame_count += 1
 
             # Add info overlay
-            cv2.putText(frame, f"Camera {args.single}", (10, 30),
-                       cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-            cv2.putText(frame, f"Frame: {frame_count}", (10, 70),
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+            cv2.putText(
+                frame,
+                f"Camera {args.single}",
+                (10, 30),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                1,
+                (0, 255, 0),
+                2,
+            )
+            cv2.putText(
+                frame,
+                f"Frame: {frame_count}",
+                (10, 70),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.7,
+                (0, 255, 0),
+                2,
+            )
 
-            cv2.imshow(f'Camera {args.single}', frame)
+            cv2.imshow(f"Camera {args.single}", frame)
 
             key = cv2.waitKey(1) & 0xFF
-            if key == ord('q') or key == 27:  # 'q' or ESC
+            if key == ord("q") or key == 27:  # 'q' or ESC
                 break
-            elif key == ord('s'):
+            elif key == ord("s"):
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                 filename = f"snapshot_cam{args.single}_{timestamp}.jpg"
                 cv2.imwrite(filename, frame)
@@ -104,8 +159,12 @@ def main():
 
     else:
         # Stereo mode
-        left_pipeline = build_gstreamer_pipeline(0, args.width, args.height, args.fps, args.flip)
-        right_pipeline = build_gstreamer_pipeline(1, args.width, args.height, args.fps, args.flip)
+        left_pipeline = build_gstreamer_pipeline(
+            0, args.width, args.height, args.fps, args.exposure, args.gain, args.flip
+        )
+        right_pipeline = build_gstreamer_pipeline(
+            1, args.width, args.height, args.fps, args.exposure, args.gain, args.flip
+        )
 
         print("\nOpening left camera...")
         left_cap = cv2.VideoCapture(left_pipeline, cv2.CAP_GSTREAMER)
@@ -115,6 +174,7 @@ def main():
             return
 
         import time
+
         time.sleep(2)  # Wait for left camera to initialize
 
         print("Opening right camera...")
@@ -140,29 +200,59 @@ def main():
             frame_count += 1
 
             # Add info overlays
-            cv2.putText(frame_left, "LEFT Camera", (10, 30),
-                       cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-            cv2.putText(frame_left, f"Frame: {frame_count}", (10, 70),
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+            cv2.putText(
+                frame_left,
+                "LEFT Camera",
+                (10, 30),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                1,
+                (0, 255, 0),
+                2,
+            )
+            cv2.putText(
+                frame_left,
+                f"Frame: {frame_count}",
+                (10, 70),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.7,
+                (0, 255, 0),
+                2,
+            )
 
-            cv2.putText(frame_right, "RIGHT Camera", (10, 30),
-                       cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-            cv2.putText(frame_right, f"Frame: {frame_count}", (10, 70),
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+            cv2.putText(
+                frame_right,
+                "RIGHT Camera",
+                (10, 30),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                1,
+                (0, 0, 255),
+                2,
+            )
+            cv2.putText(
+                frame_right,
+                f"Frame: {frame_count}",
+                (10, 70),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.7,
+                (0, 0, 255),
+                2,
+            )
 
             # Combine side-by-side
             combined = np.hstack((frame_left, frame_right))
 
             # Add separator line
             height = combined.shape[0]
-            cv2.line(combined, (args.width, 0), (args.width, height), (255, 255, 255), 2)
+            cv2.line(
+                combined, (args.width, 0), (args.width, height), (255, 255, 255), 2
+            )
 
-            cv2.imshow('Stereo Camera (Left | Right)', combined)
+            cv2.imshow("Stereo Camera (Left | Right)", combined)
 
             key = cv2.waitKey(1) & 0xFF
-            if key == ord('q') or key == 27:  # 'q' or ESC
+            if key == ord("q") or key == 27:  # 'q' or ESC
                 break
-            elif key == ord('s'):
+            elif key == ord("s"):
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                 left_filename = f"snapshot_left_{timestamp}.jpg"
                 right_filename = f"snapshot_right_{timestamp}.jpg"
@@ -180,5 +270,5 @@ def main():
     print("Viewer closed.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -12,10 +12,23 @@ import yaml
 import time
 
 
-def build_gstreamer_pipeline(sensor_id, width=1280, height=720, framerate=15):
-    """Use same resolution as calibration for correct depth computation"""
+def build_gstreamer_pipeline(sensor_id, width=1280, height=720, framerate=15,
+                             exposure_ms=33, gain=4):
+    """
+    Use same resolution as calibration for correct depth computation
+
+    MANUAL mode with fixed exposure/gain (prevents flickering)
+    - exposure_ms: Exposure time in milliseconds (default 33ms)
+    - gain: Analog gain 1-16 (default 4)
+    """
+    exposure_ns = int(exposure_ms * 1000000)  # Convert ms to ns
+
     return (
-        f'nvarguscamerasrc sensor-id={sensor_id} ! '
+        f'nvarguscamerasrc sensor-id={sensor_id} '
+        f'wbmode=0 '  # Disable auto white balance
+        f'exposuretimerange="{exposure_ns} {exposure_ns}" '  # Fix exposure
+        f'gainrange="{gain} {gain}" '  # Fix gain
+        f'! '
         f'video/x-raw(memory:NVMM), '
         f'width=(int){width}, height=(int){height}, '
         f'format=(string)NV12, framerate=(fraction){framerate}/1 ! '
@@ -197,10 +210,21 @@ def main():
 
     print(f"  Using original calibration parameters (no scaling)")
 
+    # Camera settings (MANUAL mode - prevents flickering)
+    # Adjusted to reduce brightness and over-exposure
+    exposure_ms = 30  # Exposure time in milliseconds (reduced from 33)
+    gain = 2          # Analog gain (reduced from 4)
+    print(f"\n⚙️  Camera Settings (MANUAL mode):")
+    print(f"  Exposure: {exposure_ms}ms (fixed)")
+    print(f"  Gain: {gain} (fixed)")
+    print(f"  White Balance: Manual")
+    print(f"  Note: Prevents auto-focus/auto-exposure flickering")
+    print(f"  Note: Reduced brightness to minimize over-exposure")
+
     # Open cameras
     print("\n📷 Opening cameras...")
-    left_pipeline = build_gstreamer_pipeline(0, width, height)
-    right_pipeline = build_gstreamer_pipeline(1, width, height)
+    left_pipeline = build_gstreamer_pipeline(0, width, height, exposure_ms=exposure_ms, gain=gain)
+    right_pipeline = build_gstreamer_pipeline(1, width, height, exposure_ms=exposure_ms, gain=gain)
 
     left_cap = cv2.VideoCapture(left_pipeline, cv2.CAP_GSTREAMER)
     if not left_cap.isOpened():

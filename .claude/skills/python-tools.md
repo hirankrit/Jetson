@@ -4,6 +4,111 @@
 
 ---
 
+## 0. Automated Code Quality Workflow (Post-Coding) ⭐
+
+**หลักการ: ทุกครั้งที่เขียนโค้ดเสร็จ ต้องตรวจสอบ code quality อัตโนมัติก่อนทำอย่างอื่น**
+
+### ขั้นตอนมาตรฐาน (3 Steps):
+
+**Step 1: Format with Black**
+```bash
+# Auto-format all Python files
+python3 -m black <file1.py> <file2.py> ...
+
+# หรือทั้งโฟลเดอร์
+python3 -m black src/
+```
+
+**Step 2: Lint with Flake8**
+```bash
+# Check code quality (black-compatible settings)
+python3 -m flake8 <files> --max-line-length=88 --extend-ignore=E203,W503,E501
+
+# ถ้าพบ F541 errors (f-string without placeholders) → แก้ด้วย regex
+```
+
+**Step 3: Fix F541 Errors (if any)**
+F541 = f-string ที่ไม่มี placeholders {} (ไม่จำเป็นต้องใช้ f-string)
+
+**วิธีแก้:**
+- เปลี่ยน `f"text"` → `"text"`
+- เปลี่ยน `f'text'` → `'text'`
+
+**Script อัตโนมัติ (แนะนำ):**
+```python
+#!/usr/bin/env python3
+import re
+import sys
+
+def fix_f541_in_file(filepath):
+    with open(filepath, 'r', encoding='utf-8') as f:
+        content = f.read()
+
+    # Pattern: f-strings without {} placeholders
+    pattern = r'f(["\'])([^"\'{}]*)\1'
+
+    count = 0
+    def replace_func(match):
+        nonlocal count
+        quote = match.group(1)
+        text = match.group(2)
+        if '{' not in text and '}' not in text:
+            count += 1
+            return f'{quote}{text}{quote}'
+        return match.group(0)
+
+    new_content = re.sub(pattern, replace_func, content)
+
+    if count > 0:
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(new_content)
+
+    return count
+
+# Usage: python3 fix_f541.py file1.py file2.py
+```
+
+### Quick Command (All-in-One):
+```bash
+# 1. Format
+python3 -m black file.py
+
+# 2. Check
+python3 -m flake8 file.py --max-line-length=88 --extend-ignore=E203,W503,E501
+
+# 3. If F541 exists, fix and re-check
+# (run fix_f541.py script if needed)
+```
+
+### ตัวอย่างการใช้งาน:
+```bash
+# ตัวอย่าง: เขียน test_new_feature.py เสร็จแล้ว
+
+# Step 1: Format
+python3 -m black test_new_feature.py
+# → reformatted test_new_feature.py
+
+# Step 2: Lint
+python3 -m flake8 test_new_feature.py --max-line-length=88 --extend-ignore=E203,W503,E501
+# → test_new_feature.py:42:15: F541 f-string is missing placeholders
+
+# Step 3: Fix F541 (if needed)
+# สร้างและรัน fix_f541.py script
+# → ✓ test_new_feature.py: Fixed 5 f-string(s)
+
+# Step 4: Re-check
+python3 -m flake8 test_new_feature.py --max-line-length=88 --extend-ignore=E203,W503,E501
+# → (no output = pass!) ✅
+```
+
+### สรุป:
+- ✅ **ต้องทำทุกครั้ง** หลังเขียนโค้ด Python
+- ✅ ใช้ Black (format) → Flake8 (lint) → Fix F541 (if needed)
+- ✅ ไม่ผ่าน = ห้ามรันโค้ด/commit
+- ✅ ประหยัดเวลา debug และทำให้โค้ดสะอาด
+
+---
+
 ## 1. Code Linting
 
 ### 1.1 Flake8 (PEP 8 Checker)

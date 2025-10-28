@@ -99,23 +99,43 @@ def calculate_exposure_stats(image):
     underexposed = np.sum(image < 10)
 
     return {
-        'overexposed_pct': (overexposed / total_pixels) * 100,
-        'underexposed_pct': (underexposed / total_pixels) * 100
+        "overexposed_pct": (overexposed / total_pixels) * 100,
+        "underexposed_pct": (underexposed / total_pixels) * 100,
     }
 
 
-def build_gstreamer_pipeline(sensor_id, width=1280, height=720, framerate=30, flip_method=0):
-    """Build GStreamer pipeline for nvarguscamerasrc"""
+def build_gstreamer_pipeline(
+    sensor_id,
+    width=1280,
+    height=720,
+    framerate=15,
+    exposure_ms=30,
+    gain=2,
+    flip_method=0,
+):
+    """
+    Build GStreamer pipeline for nvarguscamerasrc
+
+    MANUAL mode with fixed exposure/gain (prevents flickering)
+    - exposure_ms: Exposure time in milliseconds (default 30ms)
+    - gain: Analog gain 1-16 (default 2)
+    """
+    exposure_ns = int(exposure_ms * 1000000)  # Convert ms to ns
+
     return (
-        f'nvarguscamerasrc sensor-id={sensor_id} ! '
-        f'video/x-raw(memory:NVMM), '
-        f'width=(int){width}, height=(int){height}, '
-        f'format=(string)NV12, framerate=(fraction){framerate}/1 ! '
-        f'nvvidconv flip-method={flip_method} ! '
-        f'video/x-raw, format=(string)BGRx ! '
-        f'videoconvert ! '
-        f'video/x-raw, format=(string)BGR ! '
-        f'appsink'
+        f"nvarguscamerasrc sensor-id={sensor_id} "
+        "wbmode=0 "  # Disable auto white balance
+        f'exposuretimerange="{exposure_ns} {exposure_ns}" '  # Fix exposure
+        f'gainrange="{gain} {gain}" '  # Fix gain
+        "! "
+        "video/x-raw(memory:NVMM), "
+        f"width=(int){width}, height=(int){height}, "
+        f"format=(string)NV12, framerate=(fraction){framerate}/1 ! "
+        f"nvvidconv flip-method={flip_method} ! "
+        "video/x-raw, format=(string)BGRx ! "
+        "videoconvert ! "
+        "video/x-raw, format=(string)BGR ! "
+        "appsink"
     )
 
 
@@ -126,8 +146,8 @@ def main():
     PATTERN_TYPE = cv2.CALIB_CB_ASYMMETRIC_GRID
 
     # Create output directories
-    os.makedirs('calib_images/left', exist_ok=True)
-    os.makedirs('calib_images/right', exist_ok=True)
+    os.makedirs("calib_images/left", exist_ok=True)
+    os.makedirs("calib_images/right", exist_ok=True)
 
     # Optimal focus values (from CAMERA_SETUP_GUIDE.md)
     OPTIMAL_FOCUS_LEFT = 176.5
@@ -135,27 +155,27 @@ def main():
     FOCUS_TOLERANCE = 15.0  # Warning if focus differs by more than this
 
     # Optimal lighting parameters
-    BRIGHTNESS_MIN = 50    # Too dark if < 50
-    BRIGHTNESS_MAX = 200   # Too bright if > 200
+    BRIGHTNESS_MIN = 50  # Too dark if < 50
+    BRIGHTNESS_MAX = 200  # Too bright if > 200
     BRIGHTNESS_DIFF_MAX = 20  # Max acceptable difference between cameras
-    CONTRAST_MIN = 30      # Minimum acceptable contrast (std dev)
+    CONTRAST_MIN = 30  # Minimum acceptable contrast (std dev)
     EXPOSURE_THRESHOLD = 5.0  # Max acceptable % of over/under exposed pixels
 
     print("=" * 70)
     print("IMX219 Stereo Camera Calibration - Image Capture")
     print("=" * 70)
-    print(f"\nPattern: Asymmetric Circles Grid")
+    print("\nPattern: Asymmetric Circles Grid")
     print(f"Rows: {PATTERN_ROWS}")
     print(f"Columns: {PATTERN_COLS}")
-    print(f"Total Circles: 33")
-    print(f"Diagonal Spacing: 18mm")
-    print(f"Circle Diameter: 14mm")
-    print(f"\nOptimal Parameters:")
-    print(f"  Focus:")
+    print("Total Circles: 33")
+    print("Diagonal Spacing: 18mm")
+    print("Circle Diameter: 14mm")
+    print("\nOptimal Parameters:")
+    print("  Focus:")
     print(f"    Left:  {OPTIMAL_FOCUS_LEFT:.1f}")
     print(f"    Right: {OPTIMAL_FOCUS_RIGHT:.1f}")
-    print(f"    Diff:  < 10.0 (acceptable)")
-    print(f"  Lighting:")
+    print("    Diff:  < 10.0 (acceptable)")
+    print("  Lighting:")
     print(f"    Brightness: {BRIGHTNESS_MIN}-{BRIGHTNESS_MAX}")
     print(f"    Contrast (Std Dev): > {CONTRAST_MIN}")
     print(f"    Over/Under Exposure: < {EXPOSURE_THRESHOLD}%")
@@ -178,10 +198,24 @@ def main():
     print("  - Capture only when both Focus and Lighting are GOOD/OK")
     print("=" * 70)
 
+    # Camera settings (MANUAL mode - prevents flickering)
+    # Optimized settings for best coverage and stability
+    exposure_ms = 30  # Exposure time in milliseconds
+    gain = 2  # Analog gain
+    print("\n⚙️  Camera Settings (MANUAL mode):")
+    print(f"  Exposure: {exposure_ms}ms (fixed)")
+    print(f"  Gain: {gain} (fixed)")
+    print("  White Balance: Manual")
+    print("  Note: Optimized for coverage (+81%) and stability")
+
     # Setup cameras
     width, height = 1280, 720
-    left_pipeline = build_gstreamer_pipeline(0, width, height)
-    right_pipeline = build_gstreamer_pipeline(1, width, height)
+    left_pipeline = build_gstreamer_pipeline(
+        0, width, height, exposure_ms=exposure_ms, gain=gain
+    )
+    right_pipeline = build_gstreamer_pipeline(
+        1, width, height, exposure_ms=exposure_ms, gain=gain
+    )
 
     print("\nOpening cameras...")
     left_cap = cv2.VideoCapture(left_pipeline, cv2.CAP_GSTREAMER)
@@ -191,6 +225,7 @@ def main():
         return
 
     import time
+
     time.sleep(2)
 
     right_cap = cv2.VideoCapture(right_pipeline, cv2.CAP_GSTREAMER)
@@ -253,7 +288,11 @@ def main():
         right_diff = abs(focus_right - OPTIMAL_FOCUS_RIGHT)
 
         # Color coding: Green = good, Yellow = warning, Red = bad
-        if focus_diff < 10.0 and left_diff < FOCUS_TOLERANCE and right_diff < FOCUS_TOLERANCE:
+        if (
+            focus_diff < 10.0
+            and left_diff < FOCUS_TOLERANCE
+            and right_diff < FOCUS_TOLERANCE
+        ):
             focus_color = (0, 255, 0)  # Green - excellent
             focus_status = "GOOD"
         elif focus_diff < 20.0:
@@ -292,8 +331,12 @@ def main():
             lighting_issues.append("LOW_CONTRAST")
 
         # Check exposure
-        max_overexposed = max(exposure_left['overexposed_pct'], exposure_right['overexposed_pct'])
-        max_underexposed = max(exposure_left['underexposed_pct'], exposure_right['underexposed_pct'])
+        max_overexposed = max(
+            exposure_left["overexposed_pct"], exposure_right["overexposed_pct"]
+        )
+        max_underexposed = max(
+            exposure_left["underexposed_pct"], exposure_right["underexposed_pct"]
+        )
 
         if max_overexposed > EXPOSURE_THRESHOLD:
             lighting_issues.append("OVEREXP")
@@ -316,14 +359,14 @@ def main():
             gray_left,
             (PATTERN_COLS, PATTERN_ROWS),
             flags=PATTERN_TYPE,
-            blobDetector=detector
+            blobDetector=detector,
         )
 
         ret_right_detect, corners_right = cv2.findCirclesGrid(
             gray_right,
             (PATTERN_COLS, PATTERN_ROWS),
             flags=PATTERN_TYPE,
-            blobDetector=detector
+            blobDetector=detector,
         )
 
         # Draw detected circles
@@ -335,26 +378,54 @@ def main():
                 display_left,
                 (PATTERN_COLS, PATTERN_ROWS),
                 corners_left,
-                ret_left_detect
+                ret_left_detect,
             )
-            cv2.putText(display_left, "DETECTED", (10, 30),
-                       cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+            cv2.putText(
+                display_left,
+                "DETECTED",
+                (10, 30),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                1,
+                (0, 255, 0),
+                2,
+            )
         else:
-            cv2.putText(display_left, "NOT DETECTED", (10, 30),
-                       cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+            cv2.putText(
+                display_left,
+                "NOT DETECTED",
+                (10, 30),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                1,
+                (0, 0, 255),
+                2,
+            )
 
         if ret_right_detect:
             cv2.drawChessboardCorners(
                 display_right,
                 (PATTERN_COLS, PATTERN_ROWS),
                 corners_right,
-                ret_right_detect
+                ret_right_detect,
             )
-            cv2.putText(display_right, "DETECTED", (10, 30),
-                       cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+            cv2.putText(
+                display_right,
+                "DETECTED",
+                (10, 30),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                1,
+                (0, 255, 0),
+                2,
+            )
         else:
-            cv2.putText(display_right, "NOT DETECTED", (10, 30),
-                       cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+            cv2.putText(
+                display_right,
+                "NOT DETECTED",
+                (10, 30),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                1,
+                (0, 0, 255),
+                2,
+            )
 
         # Font settings
         font = cv2.FONT_HERSHEY_SIMPLEX
@@ -364,72 +435,188 @@ def main():
 
         # Left camera info
         y_pos = 70
-        cv2.putText(display_left, f"Focus: {focus_left:.1f}", (10, y_pos),
-                   font, font_scale, focus_color, thickness)
+        cv2.putText(
+            display_left,
+            f"Focus: {focus_left:.1f}",
+            (10, y_pos),
+            font,
+            font_scale,
+            focus_color,
+            thickness,
+        )
         y_pos += line_height
-        cv2.putText(display_left, f"Bright: {brightness_left:.1f}", (10, y_pos),
-                   font, font_scale, lighting_color, thickness)
+        cv2.putText(
+            display_left,
+            f"Bright: {brightness_left:.1f}",
+            (10, y_pos),
+            font,
+            font_scale,
+            lighting_color,
+            thickness,
+        )
         y_pos += line_height
-        cv2.putText(display_left, f"Contrast: {contrast_left:.1f}", (10, y_pos),
-                   font, font_scale, lighting_color, thickness)
+        cv2.putText(
+            display_left,
+            f"Contrast: {contrast_left:.1f}",
+            (10, y_pos),
+            font,
+            font_scale,
+            lighting_color,
+            thickness,
+        )
         y_pos += line_height
-        cv2.putText(display_left, f"Over: {exposure_left['overexposed_pct']:.2f}%", (10, y_pos),
-                   font, font_scale, lighting_color, thickness)
+        cv2.putText(
+            display_left,
+            f"Over: {exposure_left['overexposed_pct']:.2f}%",
+            (10, y_pos),
+            font,
+            font_scale,
+            lighting_color,
+            thickness,
+        )
         y_pos += line_height
-        cv2.putText(display_left, f"Under: {exposure_left['underexposed_pct']:.2f}%", (10, y_pos),
-                   font, font_scale, lighting_color, thickness)
+        cv2.putText(
+            display_left,
+            f"Under: {exposure_left['underexposed_pct']:.2f}%",
+            (10, y_pos),
+            font,
+            font_scale,
+            lighting_color,
+            thickness,
+        )
         y_pos += line_height
-        cv2.putText(display_left, f"Status: {lighting_status}", (10, y_pos),
-                   font, font_scale, lighting_color, thickness)
+        cv2.putText(
+            display_left,
+            f"Status: {lighting_status}",
+            (10, y_pos),
+            font,
+            font_scale,
+            lighting_color,
+            thickness,
+        )
         y_pos += line_height
-        cv2.putText(display_left, f"Captured: {capture_count}", (10, y_pos),
-                   font, font_scale, (255, 255, 0), thickness)
+        cv2.putText(
+            display_left,
+            f"Captured: {capture_count}",
+            (10, y_pos),
+            font,
+            font_scale,
+            (255, 255, 0),
+            thickness,
+        )
 
         # Right camera info
         y_pos = 70
-        cv2.putText(display_right, f"Focus: {focus_right:.1f}", (10, y_pos),
-                   font, font_scale, focus_color, thickness)
+        cv2.putText(
+            display_right,
+            f"Focus: {focus_right:.1f}",
+            (10, y_pos),
+            font,
+            font_scale,
+            focus_color,
+            thickness,
+        )
         y_pos += line_height
-        cv2.putText(display_right, f"Bright: {brightness_right:.1f}", (10, y_pos),
-                   font, font_scale, lighting_color, thickness)
+        cv2.putText(
+            display_right,
+            f"Bright: {brightness_right:.1f}",
+            (10, y_pos),
+            font,
+            font_scale,
+            lighting_color,
+            thickness,
+        )
         y_pos += line_height
-        cv2.putText(display_right, f"Contrast: {contrast_right:.1f}", (10, y_pos),
-                   font, font_scale, lighting_color, thickness)
+        cv2.putText(
+            display_right,
+            f"Contrast: {contrast_right:.1f}",
+            (10, y_pos),
+            font,
+            font_scale,
+            lighting_color,
+            thickness,
+        )
         y_pos += line_height
-        cv2.putText(display_right, f"Over: {exposure_right['overexposed_pct']:.2f}%", (10, y_pos),
-                   font, font_scale, lighting_color, thickness)
+        cv2.putText(
+            display_right,
+            f"Over: {exposure_right['overexposed_pct']:.2f}%",
+            (10, y_pos),
+            font,
+            font_scale,
+            lighting_color,
+            thickness,
+        )
         y_pos += line_height
-        cv2.putText(display_right, f"Under: {exposure_right['underexposed_pct']:.2f}%", (10, y_pos),
-                   font, font_scale, lighting_color, thickness)
+        cv2.putText(
+            display_right,
+            f"Under: {exposure_right['underexposed_pct']:.2f}%",
+            (10, y_pos),
+            font,
+            font_scale,
+            lighting_color,
+            thickness,
+        )
         y_pos += line_height
-        cv2.putText(display_right, f"Status: {lighting_status}", (10, y_pos),
-                   font, font_scale, lighting_color, thickness)
+        cv2.putText(
+            display_right,
+            f"Status: {lighting_status}",
+            (10, y_pos),
+            font,
+            font_scale,
+            lighting_color,
+            thickness,
+        )
         y_pos += line_height
-        cv2.putText(display_right, f"Captured: {capture_count}", (10, y_pos),
-                   font, font_scale, (255, 255, 0), thickness)
+        cv2.putText(
+            display_right,
+            f"Captured: {capture_count}",
+            (10, y_pos),
+            font,
+            font_scale,
+            (255, 255, 0),
+            thickness,
+        )
 
         # Add summary info at bottom
         summary_y = height - 40
-        cv2.putText(display_left, f"F.Diff: {focus_diff:.1f} | B.Diff: {brightness_diff:.1f}",
-                   (10, summary_y), font, 0.5, (255, 255, 255), 1)
-        cv2.putText(display_right, f"F.Diff: {focus_diff:.1f} | B.Diff: {brightness_diff:.1f}",
-                   (10, summary_y), font, 0.5, (255, 255, 255), 1)
+        cv2.putText(
+            display_left,
+            f"F.Diff: {focus_diff:.1f} | B.Diff: {brightness_diff:.1f}",
+            (10, summary_y),
+            font,
+            0.5,
+            (255, 255, 255),
+            1,
+        )
+        cv2.putText(
+            display_right,
+            f"F.Diff: {focus_diff:.1f} | B.Diff: {brightness_diff:.1f}",
+            (10, summary_y),
+            font,
+            0.5,
+            (255, 255, 255),
+            1,
+        )
 
         # Combine for display
         combined = np.hstack((display_left, display_right))
         cv2.line(combined, (width, 0), (width, height), (255, 255, 255), 2)
 
-        cv2.imshow('Stereo Calibration Capture (Left | Right)', combined)
+        cv2.imshow("Stereo Calibration Capture (Left | Right)", combined)
 
         key = cv2.waitKey(1) & 0xFF
 
-        if key == ord('c'):
+        if key == ord("c"):
             # Capture only if both patterns detected
             if ret_left_detect and ret_right_detect:
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%")
 
-                left_filename = f"calib_images/left/img_{capture_count:03d}_{timestamp}.jpg"
-                right_filename = f"calib_images/right/img_{capture_count:03d}_{timestamp}.jpg"
+                left_filename = (
+                    f"calib_images/left/img_{capture_count:03d}_{timestamp}.jpg"
+                )
+                right_filename = (
+                    f"calib_images/right/img_{capture_count:03d}_{timestamp}.jpg"
+                )
 
                 cv2.imwrite(left_filename, frame_left)
                 cv2.imwrite(right_filename, frame_right)
@@ -441,29 +628,43 @@ def main():
                 print(f"  {'='*60}")
 
                 # Focus info
-                print(f"  Focus:")
-                print(f"    Left: {focus_left:.1f}, Right: {focus_right:.1f}, Diff: {focus_diff:.1f}")
+                print("  Focus:")
+                print(
+                    f"    Left: {focus_left:.1f}, Right: {focus_right:.1f}, Diff: {focus_diff:.1f}"
+                )
                 if focus_status == "CHECK!":
-                    print(f"    ⚠️  WARNING: Focus may have changed! (Status: {focus_status})")
-                    print(f"        Optimal - Left: {OPTIMAL_FOCUS_LEFT:.1f}, Right: {OPTIMAL_FOCUS_RIGHT:.1f}")
+                    print(
+                        f"    ⚠️  WARNING: Focus may have changed! (Status: {focus_status})"
+                    )
+                    print(
+                        f"        Optimal - Left: {OPTIMAL_FOCUS_LEFT:.1f}, Right: {OPTIMAL_FOCUS_RIGHT:.1f}"
+                    )
                 elif focus_status == "GOOD":
-                    print(f"    ✓  Focus is excellent!")
+                    print("    ✓  Focus is excellent!")
                 else:
                     print(f"    Status: {focus_status}")
 
                 # Lighting info
-                print(f"  Lighting:")
-                print(f"    Brightness - Left: {brightness_left:.1f}, Right: {brightness_right:.1f}, Diff: {brightness_diff:.1f}")
-                print(f"    Contrast - Left: {contrast_left:.1f}, Right: {contrast_right:.1f}")
-                print(f"    Overexposed - Left: {exposure_left['overexposed_pct']:.2f}%, Right: {exposure_right['overexposed_pct']:.2f}%")
-                print(f"    Underexposed - Left: {exposure_left['underexposed_pct']:.2f}%, Right: {exposure_right['underexposed_pct']:.2f}%")
+                print("  Lighting:")
+                print(
+                    f"    Brightness - Left: {brightness_left:.1f}, Right: {brightness_right:.1f}, Diff: {brightness_diff:.1f}"
+                )
+                print(
+                    f"    Contrast - Left: {contrast_left:.1f}, Right: {contrast_right:.1f}"
+                )
+                print(
+                    f"    Overexposed - Left: {exposure_left['overexposed_pct']:.2f}%, Right: {exposure_right['overexposed_pct']:.2f}%"
+                )
+                print(
+                    f"    Underexposed - Left: {exposure_left['underexposed_pct']:.2f}%, Right: {exposure_right['underexposed_pct']:.2f}%"
+                )
                 print(f"    Status: {lighting_status}")
 
                 # Warnings
                 if len(lighting_issues) > 0:
                     print(f"    ⚠️  Issues: {', '.join(lighting_issues)}")
                 else:
-                    print(f"    ✓  Lighting is excellent!")
+                    print("    ✓  Lighting is excellent!")
 
                 print(f"  {'='*60}")
 
@@ -473,7 +674,7 @@ def main():
             else:
                 print("✗ Cannot capture: Pattern not detected in both cameras")
 
-        elif key == ord('q') or key == 27:  # 'q' or ESC
+        elif key == ord("q") or key == 27:  # 'q' or ESC
             break
 
     left_cap.release()
@@ -483,11 +684,11 @@ def main():
     print("\n" + "=" * 70)
     print(f"Capture complete! Total images: {capture_count}")
     print("\nImages saved to:")
-    print(f"  - calib_images/left/")
-    print(f"  - calib_images/right/")
+    print("  - calib_images/left/")
+    print("  - calib_images/right/")
     print("\nNext step: Run stereo_calibration.py to compute calibration parameters")
     print("=" * 70)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

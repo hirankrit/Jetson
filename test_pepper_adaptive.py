@@ -13,25 +13,39 @@ import yaml
 import time
 
 
-def build_gstreamer_pipeline(sensor_id, width=1280, height=720, framerate=15):
-    """Use same resolution as calibration for correct depth computation"""
+def build_gstreamer_pipeline(
+    sensor_id, width=1280, height=720, framerate=15, exposure_ms=30, gain=2
+):
+    """
+    Use same resolution as calibration for correct depth computation
+
+    MANUAL mode with fixed exposure/gain (prevents flickering)
+    - exposure_ms: Exposure time in milliseconds (default 30ms)
+    - gain: Analog gain 1-16 (default 2)
+    """
+    exposure_ns = int(exposure_ms * 1000000)  # Convert ms to ns
+
     return (
-        f'nvarguscamerasrc sensor-id={sensor_id} ! '
-        f'video/x-raw(memory:NVMM), '
-        f'width=(int){width}, height=(int){height}, '
-        f'format=(string)NV12, framerate=(fraction){framerate}/1 ! '
-        f'nvvidconv flip-method=0 ! '
-        f'video/x-raw, format=(string)BGRx ! '
-        f'videoconvert ! '
-        f'video/x-raw, format=(string)BGR ! '
-        f'appsink'
+        f"nvarguscamerasrc sensor-id={sensor_id} "
+        "wbmode=0 "  # Disable auto white balance
+        f'exposuretimerange="{exposure_ns} {exposure_ns}" '  # Fix exposure
+        f'gainrange="{gain} {gain}" '  # Fix gain
+        "! "
+        "video/x-raw(memory:NVMM), "
+        f"width=(int){width}, height=(int){height}, "
+        f"format=(string)NV12, framerate=(fraction){framerate}/1 ! "
+        "nvvidconv flip-method=0 ! "
+        "video/x-raw, format=(string)BGRx ! "
+        "videoconvert ! "
+        "video/x-raw, format=(string)BGR ! "
+        "appsink"
     )
 
 
 def load_calibration():
-    with open('stereo_calib.yaml', 'r') as f:
+    with open("stereo_calib.yaml", "r") as f:
         calib = yaml.safe_load(f)
-    maps = np.load('rectification_maps.npz')
+    maps = np.load("rectification_maps.npz")
     return calib, maps
 
 
@@ -45,14 +59,14 @@ def compute_depth(left_gray, right_gray, baseline, focal):
         minDisparity=min_disp,
         numDisparities=num_disp,
         blockSize=window_size,
-        P1=8 * 3 * window_size ** 2,
-        P2=32 * 3 * window_size ** 2,
+        P1=8 * 3 * window_size**2,
+        P2=32 * 3 * window_size**2,
         disp12MaxDiff=2,
         uniquenessRatio=12,
         speckleWindowSize=120,
         speckleRange=16,
         preFilterCap=63,
-        mode=cv2.STEREO_SGBM_MODE_SGBM_3WAY
+        mode=cv2.STEREO_SGBM_MODE_SGBM_3WAY,
     )
 
     # Compute disparity
@@ -91,57 +105,57 @@ def adaptive_depth_estimation(valid_depths, coverage):
     """
     # Calculate all candidate methods
     methods = {
-        'min': np.min(valid_depths),
-        'percentile_05': np.percentile(valid_depths, 5),
-        'percentile_10': np.percentile(valid_depths, 10),
-        'percentile_15': np.percentile(valid_depths, 15),
-        'median': np.median(valid_depths),
-        'mean': np.mean(valid_depths),
+        "min": np.min(valid_depths),
+        "percentile_05": np.percentile(valid_depths, 5),
+        "percentile_10": np.percentile(valid_depths, 10),
+        "percentile_15": np.percentile(valid_depths, 15),
+        "median": np.median(valid_depths),
+        "mean": np.mean(valid_depths),
     }
 
     # Adaptive selection based on coverage
     if coverage < 15:
         # Very low coverage - very shiny surface
-        selected_depth = methods['percentile_05']
+        selected_depth = methods["percentile_05"]
         method_name = "5th percentile"
         reason = "Very low coverage (<15%) - shiny surface detected"
         confidence = "low"
 
     elif coverage < 25:
         # Low coverage - shiny surface
-        selected_depth = methods['percentile_05']
+        selected_depth = methods["percentile_05"]
         method_name = "5th percentile"
         reason = "Low coverage (<25%) - shiny surface likely"
         confidence = "medium"
 
     elif coverage < 35:
         # Medium-low coverage - slightly shiny
-        selected_depth = methods['percentile_10']
+        selected_depth = methods["percentile_10"]
         method_name = "10th percentile"
         reason = "Medium-low coverage (25-35%) - balanced approach"
         confidence = "good"
 
     elif coverage < 50:
         # Medium coverage - normal surface
-        selected_depth = methods['percentile_10']
+        selected_depth = methods["percentile_10"]
         method_name = "10th percentile"
         reason = "Medium coverage (35-50%) - standard approach"
         confidence = "good"
 
     else:
         # High coverage - good texture
-        selected_depth = methods['percentile_15']
+        selected_depth = methods["percentile_15"]
         method_name = "15th percentile"
         reason = "High coverage (>50%) - good texture, conservative"
         confidence = "high"
 
     return {
-        'depth': selected_depth,
-        'method': method_name,
-        'reason': reason,
-        'confidence': confidence,
-        'coverage': coverage,
-        'all_methods': methods
+        "depth": selected_depth,
+        "method": method_name,
+        "reason": reason,
+        "confidence": confidence,
+        "coverage": coverage,
+        "all_methods": methods,
     }
 
 
@@ -165,8 +179,12 @@ def click_handler(event, x, y, flags, param):
                 if len(clicks) >= 2:
                     values = np.array(clicks)
                     print(f"\n   Last {len(clicks)} measurements:")
-                    print(f"   Average: {values.mean():.1f} mm ({values.mean()/10:.1f} cm)")
-                    print(f"   Std Dev: {values.std():.2f} mm ({values.std()/10:.2f} cm)")
+                    print(
+                        f"   Average: {values.mean():.1f} mm ({values.mean()/10:.1f} cm)"
+                    )
+                    print(
+                        f"   Std Dev: {values.std():.2f} mm ({values.std()/10:.2f} cm)"
+                    )
                     print(f"   Range: {values.min():.1f} - {values.max():.1f} mm")
                     print(f"   Median: {np.median(values):.1f} mm")
             else:
@@ -190,27 +208,41 @@ def main():
     # Load calibration
     print("\n📐 Loading calibration...")
     calib, maps = load_calibration()
-    baseline = calib['baseline_mm']
-    Q = np.array(calib['stereo']['Q_matrix'])
+    baseline = calib["baseline_mm"]
+    Q = np.array(calib["stereo"]["Q_matrix"])
     focal_length = abs(Q[2, 3])
 
     print(f"  Baseline: {baseline:.2f} mm")
     print(f"  Focal: {focal_length:.2f} px")
 
-    width = calib['image_width']
-    height = calib['image_height']
+    width = calib["image_width"]
+    height = calib["image_height"]
     print(f"  Working resolution: {width}x{height} ✓")
 
     # Use original calibration maps
-    map_left_x = maps['map_left_x']
-    map_left_y = maps['map_left_y']
-    map_right_x = maps['map_right_x']
-    map_right_y = maps['map_right_y']
+    map_left_x = maps["map_left_x"]
+    map_left_y = maps["map_left_y"]
+    map_right_x = maps["map_right_x"]
+    map_right_y = maps["map_right_y"]
+
+    # Camera settings (MANUAL mode - prevents flickering)
+    # Optimized settings for best coverage and stability
+    exposure_ms = 30  # Exposure time in milliseconds
+    gain = 2  # Analog gain
+    print("\n⚙️  Camera Settings (MANUAL mode):")
+    print(f"  Exposure: {exposure_ms}ms (fixed)")
+    print(f"  Gain: {gain} (fixed)")
+    print("  White Balance: Manual")
+    print("  Note: Optimized for coverage (+81%) and stability")
 
     # Open cameras
     print("\n📷 Opening cameras...")
-    left_pipeline = build_gstreamer_pipeline(0, width, height)
-    right_pipeline = build_gstreamer_pipeline(1, width, height)
+    left_pipeline = build_gstreamer_pipeline(
+        0, width, height, exposure_ms=exposure_ms, gain=gain
+    )
+    right_pipeline = build_gstreamer_pipeline(
+        1, width, height, exposure_ms=exposure_ms, gain=gain
+    )
 
     left_cap = cv2.VideoCapture(left_pipeline, cv2.CAP_GSTREAMER)
     if not left_cap.isOpened():
@@ -240,8 +272,8 @@ def main():
     print("=" * 80)
     print("\n👉 Press SPACE to start...")
 
-    cv2.namedWindow('View', cv2.WINDOW_NORMAL)
-    cv2.resizeWindow('View', 1280, 480)
+    cv2.namedWindow("View", cv2.WINDOW_NORMAL)
+    cv2.resizeWindow("View", 1280, 480)
 
     depth_map = None
     final_mask = None
@@ -258,29 +290,45 @@ def main():
 
         # Show preview
         preview = frame_left.copy()
-        cv2.putText(preview, "Press SPACE to capture", (10, 30),
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
-        cv2.putText(preview, f"Captures: {capture_count}", (10, 65),
-                   cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+        cv2.putText(
+            preview,
+            "Press SPACE to capture",
+            (10, 30),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.8,
+            (0, 255, 0),
+            2,
+        )
+        cv2.putText(
+            preview,
+            f"Captures: {capture_count}",
+            (10, 65),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.8,
+            (0, 255, 0),
+            2,
+        )
 
-        cv2.imshow('View', preview)
+        cv2.imshow("View", preview)
 
         key = cv2.waitKey(1) & 0xFF
 
-        if key == ord('q'):
+        if key == ord("q"):
             break
 
-        elif key == ord(' '):  # SPACE - capture
+        elif key == ord(" "):  # SPACE - capture
             print("\n" + "=" * 80)
             print(f"📸 CAPTURE #{capture_count + 1}")
             print("=" * 80)
 
             # Rectify
             t0 = time.time()
-            rectified_left = cv2.remap(frame_left, map_left_x, map_left_y,
-                                       cv2.INTER_LINEAR)
-            rectified_right = cv2.remap(frame_right, map_right_x, map_right_y,
-                                        cv2.INTER_LINEAR)
+            rectified_left = cv2.remap(
+                frame_left, map_left_x, map_left_y, cv2.INTER_LINEAR
+            )
+            rectified_right = cv2.remap(
+                frame_right, map_right_x, map_right_y, cv2.INTER_LINEAR
+            )
             t1 = time.time()
             print(f"  Rectification: {(t1-t0)*1000:.0f} ms")
 
@@ -301,10 +349,12 @@ def main():
 
             # Coverage stats
             coverage = np.sum(final_mask) / (width * height) * 100
-            left_cov = np.sum(final_mask[:, :width//2]) / (height * width // 2) * 100
-            right_cov = np.sum(final_mask[:, width//2:]) / (height * width // 2) * 100
+            left_cov = np.sum(final_mask[:, : width // 2]) / (height * width // 2) * 100
+            right_cov = (
+                np.sum(final_mask[:, width // 2 :]) / (height * width // 2) * 100
+            )
 
-            print(f"\n📊 Coverage:")
+            print("\n📊 Coverage:")
             print(f"  Overall: {coverage:.1f}%")
             print(f"  Left half: {left_cov:.1f}%")
             print(f"  Right half: {right_cov:.1f}%")
@@ -314,26 +364,44 @@ def main():
                 valid_depths = depth_map[final_mask]
                 result = adaptive_depth_estimation(valid_depths, coverage)
 
-                print(f"\n🤖 ADAPTIVE DEPTH ESTIMATION:")
+                print("\n🤖 ADAPTIVE DEPTH ESTIMATION:")
                 print(f"  Selected Method: {result['method']}")
-                print(f"  📏 Depth: {result['depth']:.1f} mm ({result['depth']/10:.1f} cm) ⭐")
+                print(
+                    f"  📏 Depth: {result['depth']:.1f} mm ({result['depth']/10:.1f} cm) ⭐"
+                )
                 print(f"  Reason: {result['reason']}")
                 print(f"  Confidence: {result['confidence']}")
 
-                print(f"\n📊 All Methods (for comparison):")
-                all_methods = result['all_methods']
-                print(f"  Min:              {all_methods['min']:.1f} mm ({all_methods['min']/10:.1f} cm)")
-                print(f"  5th percentile:   {all_methods['percentile_05']:.1f} mm ({all_methods['percentile_05']/10:.1f} cm)")
-                print(f"  10th percentile:  {all_methods['percentile_10']:.1f} mm ({all_methods['percentile_10']/10:.1f} cm)")
-                print(f"  15th percentile:  {all_methods['percentile_15']:.1f} mm ({all_methods['percentile_15']/10:.1f} cm)")
-                print(f"  Median:           {all_methods['median']:.1f} mm ({all_methods['median']/10:.1f} cm)")
-                print(f"  Mean:             {all_methods['mean']:.1f} mm ({all_methods['mean']/10:.1f} cm)")
+                print("\n📊 All Methods (for comparison):")
+                all_methods = result["all_methods"]
+                print(
+                    f"  Min:              {all_methods['min']:.1f} mm ({all_methods['min']/10:.1f} cm)"
+                )
+                print(
+                    f"  5th percentile:   {all_methods['percentile_05']:.1f} mm ({all_methods['percentile_05']/10:.1f} cm)"
+                )
+                print(
+                    f"  10th percentile:  {all_methods['percentile_10']:.1f} mm ({all_methods['percentile_10']/10:.1f} cm)"
+                )
+                print(
+                    f"  15th percentile:  {all_methods['percentile_15']:.1f} mm ({all_methods['percentile_15']/10:.1f} cm)"
+                )
+                print(
+                    f"  Median:           {all_methods['median']:.1f} mm ({all_methods['median']/10:.1f} cm)"
+                )
+                print(
+                    f"  Mean:             {all_methods['mean']:.1f} mm ({all_methods['mean']/10:.1f} cm)"
+                )
 
-                print(f"\n💡 Comparison:")
-                diff_median = all_methods['median'] - result['depth']
-                diff_mean = all_methods['mean'] - result['depth']
-                print(f"  Median - Adaptive: {diff_median:.1f} mm ({diff_median/10:.1f} cm)")
-                print(f"  Mean - Adaptive:   {diff_mean:.1f} mm ({diff_mean/10:.1f} cm)")
+                print("\n💡 Comparison:")
+                diff_median = all_methods["median"] - result["depth"]
+                diff_mean = all_methods["mean"] - result["depth"]
+                print(
+                    f"  Median - Adaptive: {diff_median:.1f} mm ({diff_median/10:.1f} cm)"
+                )
+                print(
+                    f"  Mean - Adaptive:   {diff_mean:.1f} mm ({diff_mean/10:.1f} cm)"
+                )
 
                 # Visualize depth
                 depth_vis = depth_map.copy()
@@ -344,33 +412,55 @@ def main():
                 depth_colored[~final_mask] = [0, 0, 0]
 
                 # Add overlay
-                cv2.putText(depth_colored, f"Coverage: {coverage:.1f}%",
-                           (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
-                cv2.putText(depth_colored, f"{result['method']}: {result['depth']/10:.1f}cm",
-                           (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-                cv2.putText(depth_colored, f"Confidence: {result['confidence']}",
-                           (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
+                cv2.putText(
+                    depth_colored,
+                    f"Coverage: {coverage:.1f}%",
+                    (10, 30),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.7,
+                    (255, 255, 255),
+                    2,
+                )
+                cv2.putText(
+                    depth_colored,
+                    f"{result['method']}: {result['depth']/10:.1f}cm",
+                    (10, 60),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.7,
+                    (0, 255, 0),
+                    2,
+                )
+                cv2.putText(
+                    depth_colored,
+                    f"Confidence: {result['confidence']}",
+                    (10, 90),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.7,
+                    (255, 255, 0),
+                    2,
+                )
 
                 # Combine
                 combined = np.hstack([rectified_left, depth_colored])
-                cv2.imshow('View', combined)
+                cv2.imshow("View", combined)
 
                 # Reset clicks
                 clicks = []
 
                 # Set mouse callback
-                cv2.setMouseCallback('View', click_handler,
-                                   (depth_map, final_mask, clicks, width))
+                cv2.setMouseCallback(
+                    "View", click_handler, (depth_map, final_mask, clicks, width)
+                )
 
                 capture_count += 1
 
                 print("\n👆 Click on the image to measure depth")
 
-        elif key == ord('r'):  # Reset clicks
+        elif key == ord("r"):  # Reset clicks
             clicks = []
             print("\n🔄 Measurements reset")
 
-        elif key == ord('s') and depth_map is not None:  # Save
+        elif key == ord("s") and depth_map is not None:  # Save
             timestamp = int(time.time())
             cv2.imwrite(f"adaptive_{timestamp}_left.jpg", rectified_left)
             cv2.imwrite(f"adaptive_{timestamp}_depth.jpg", depth_colored)
@@ -385,5 +475,5 @@ def main():
     print("=" * 80)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
