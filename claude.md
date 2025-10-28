@@ -114,7 +114,7 @@
 
 ## 🎯 Current Status
 
-**Last Updated**: 2025-10-28 Evening (Week 1 Extended - 100% COMPLETE! 🎉)
+**Last Updated**: 2025-10-28 Night (Week 1 Extended - 100% COMPLETE! 🎉)
 
 ### Development Approach
 **เลือกใช้**: [Vision-First Roadmap](docs/11_vision_first_roadmap.md) ⭐
@@ -123,6 +123,7 @@
 **Lighting**: 3x LEDs (Top, Left, Right) - Optimal setup ✅
 **Camera Settings**: Exposure=30ms, Gain=2 (OPTIMIZED) ✅
 **AI Framework**: PyTorch 2.9.0 + CUDA 12.6 ✅ พร้อมใช้งาน
+**Code Quality**: Black + Flake8 + Automated Workflow ✅ พร้อมใช้งาน
 
 ### Project Phase (Vision-First)
 - [x] ออกแบบ overall architecture เสร็จสมบูรณ์
@@ -216,6 +217,8 @@
     - Stereo calibration + pepper testing done!
     - LED lighting experiment: 3x LEDs (Top, Left, Right)
     - Result: Coverage limited by geometry (not lighting)
+    - Code quality improvement: Black formatter + Flake8 (0 errors)
+    - Automated workflow: Post-coding quality check ready!
     - Conclusion: System ready for production!
     - รายงานสรุป: ดูที่ Development Notes → LED Testing Results
   - [ ] **Week 2: Dataset collection (500-1000 images)** ← กำลังเตรียม
@@ -363,6 +366,21 @@
     - ✅ Camera settings: OPTIMIZED
     - ✅ Performance: VERIFIED (พริกกอง + พริกเดี่ยว)
     - 🚀 **Ready for Week 2: Dataset Collection!**
+69. ✅ **Code Quality Improvement** 🎨 (2025-10-28 Night)
+    - ติดตั้ง Black auto-formatter (v25.9.0)
+    - รัน Black formatter กับไฟล์ทั้งหมด (9 files reformatted)
+    - แก้ไข F541 errors (87 f-strings without placeholders)
+    - ตรวจสอบด้วย Flake8: 0 errors ✅
+70. ✅ **อัพเดต Python Tools Skill** 📚
+    - เพิ่ม "Automated Code Quality Workflow" section
+    - มี 3 steps: Black → Flake8 → Fix F541
+    - พร้อม script และตัวอย่างการใช้งาน
+    - Workflow พร้อมใช้ทุกครั้งหลังเขียนโค้ด
+71. ✅ **Commit & Push to GitHub** 🚀
+    - Commit: "refactor: ปรับปรุง code quality..."
+    - Push 15 files (9 modified + 6 new)
+    - เพิ่มเอกสาร LED Testing และ Camera Settings Final
+    - เพิ่ม diagnostic tools (balance_brightness.py, diagnose_camera.py)
 
 ---
 
@@ -966,6 +984,73 @@ Repeatability: ±0.2mm (excellent)
 
 ---
 
+### 🎨 Code Quality Workflow (2025-10-28 Night)
+
+**Objective**: Establish automated code quality checks for all Python files
+
+**Tools Installed:**
+- Black auto-formatter (v25.9.0)
+- Flake8 linter (already installed)
+
+**Workflow (3 Steps):**
+
+**Step 1: Format with Black**
+```bash
+python3 -m black <files>
+# Auto-formats code to PEP 8 standard
+```
+
+**Step 2: Lint with Flake8**
+```bash
+python3 -m flake8 <files> --max-line-length=88 --extend-ignore=E203,W503,E501
+# Checks code quality (black-compatible settings)
+```
+
+**Step 3: Fix F541 Errors (if any)**
+- F541 = f-string without placeholders {} (unnecessary f-prefix)
+- Fix: `f"text"` → `"text"`
+- Created automated script using regex pattern matching
+
+**Results:**
+| Metric | Before | After | Improvement |
+|--------|--------|-------|-------------|
+| Files formatted | 9 files | 9 files | 100% |
+| F541 errors | 87 | 0 | -100% |
+| Flake8 errors | Multiple | 0 | -100% ✅ |
+| Code style | Inconsistent | Black standard | Consistent |
+
+**Files Updated:**
+1. test_pepper_depth.py - 17 f-strings fixed
+2. test_pepper_adaptive.py - 15 f-strings fixed
+3. test_depth_quality.py - 11 f-strings fixed
+4. capture_calibration.py - 25 f-strings fixed
+5. view_camera.py - 10 f-strings fixed
+6. gstreamer_camera_node.py - 9 f-strings fixed
+7. test_pepper_foreground.py - formatted
+8. claude.md - formatted
+9. .claude/skills/python-tools.md - added workflow
+
+**Documentation:**
+- `.claude/skills/python-tools.md` - Added "Automated Code Quality Workflow" section
+  - Step-by-step instructions
+  - F541 fix script (regex-based)
+  - Quick commands and examples
+
+**Benefits:**
+- ✅ Consistent code style across all files
+- ✅ Zero linting errors
+- ✅ Automated workflow ready for future development
+- ✅ Easier code review and maintenance
+
+**Post-Coding Protocol:**
+> Every time after writing Python code:
+> 1. Run Black formatter
+> 2. Run Flake8 linter
+> 3. Fix F541 errors (if any)
+> 4. Only commit when 0 errors
+
+---
+
 ### Key Decisions
 - **ใช้ ROS2**: เพื่อเรียนรู้และสร้างระบบที่ scalable
 - **Dual Arms**: เพิ่มความเร็วในการ sorting (parallel processing)
@@ -982,6 +1067,7 @@ Repeatability: ±0.2mm (excellent)
 - **Exposure/Gain** (2025-10-28): exposure=30ms, gain=2 - Optimized for texture visibility
 - **Coverage Optimization** (2025-10-28): ลดแสง = เพิ่ม coverage (+81%) - "Less light, more coverage!"
 - **Accept Geometric Limitations**: Coverage asymmetry ยังคงมี แต่ดีขึ้นมาก (Left 9%→18%, Right 45%→81%)
+- **Code Quality Tools** (2025-10-28): Black + Flake8 + Automated Workflow - ตรวจสอบทุกครั้งหลังเขียนโค้ด
 
 ### Success Criteria
 
@@ -1112,23 +1198,34 @@ git reset --hard HEAD
 │                                   # exposure=30ms, gain=2 (OPTIMIZED)
 │                                   # Coverage improvement +81% (27%→49%)
 │
+├── ============ 🎨 Code Quality Tools (2025-10-28 Night) ============ ⭐ NEW!
+├── .claude/skills/python-tools.md  # Python development tools & workflows
+│                                   # - Automated Code Quality Workflow (3 steps)
+│                                   # - Black formatter + Flake8 linter
+│                                   # - F541 fix script (regex-based)
+│                                   # - Post-coding protocol
+│
 ├── ============ 🔧 Diagnostic Tools (Week 1 Extended) ============
 ├── test_camera_focus.py            # Test camera focus and sharpness
-├── diagnose_camera.py              # Camera diagnostic tool (AUTO vs MANUAL)
+├── diagnose_camera.py              # Camera diagnostic tool (AUTO vs MANUAL) ⭐ NEW!
 │                                   # - Check focus flickering
 │                                   # - Check auto-exposure issues
 │                                   # - Compare modes
-├── balance_brightness.py           # Brightness balance tool
+├── balance_brightness.py           # Brightness balance tool ⭐ NEW!
 │                                   # - Tune exposure/gain per camera
 │                                   # - Interactive adjustment
 │                                   # - Real-time metrics
+│                                   # - Code quality: Black formatted ✅
 │
 ├── ============ 🎥 Camera & Vision Tools ============
 ├── view_camera.py                  # Camera viewer (real-time display)
+│                                   # Code quality: Black formatted ✅ (10 f-strings fixed)
 ├── gstreamer_camera_node.py        # ROS2 stereo camera node
+│                                   # Code quality: Black formatted ✅ (9 f-strings fixed)
 ├── stereo_camera.launch.py         # ROS2 launch file
 │
 ├── capture_calibration.py          # Capture calibration images (5×6 pattern)
+│                                   # Code quality: Black formatted ✅ (25 f-strings fixed)
 │                                   # Features: Focus + Lighting monitoring ⭐
 │                                   # - Real-time: Brightness, Contrast, Exposure
 │                                   # - Status indicators (Green/Yellow/Red)
@@ -1137,18 +1234,22 @@ git reset --hard HEAD
 ├── test_depth_map.py               # Basic depth map testing
 ├── test_depth_map_enhanced.py      # Enhanced (StereoSGBM + WLS + CLAHE)
 │
-├── test_depth_quality.py           # 📊 Analyze depth coverage & quality (NEW!)
+├── test_depth_quality.py           # 📊 Analyze depth coverage & quality
+│                                   # Code quality: Black formatted ✅ (11 f-strings fixed)
 ├── test_depth_balanced.py          # ⚖️ Balanced parameters (crashes - don't use)
 ├── test_pepper_depth.py            # 🌶️ Lightweight pepper testing tool ⭐ RECOMMENDED!
+│                                   # Code quality: Black formatted ✅ (17 f-strings fixed)
 │                                   # - 640x480 resolution (stable)
 │                                   # - On-demand processing (press SPACE)
 │                                   # - Fast (~500ms) & accurate (±0.5cm)
-├── test_pepper_foreground.py      # 🌶️ Foreground Detection method (Week 1) ✅ UPDATED!
+├── test_pepper_foreground.py      # 🌶️ Foreground Detection method ✅
+│                                   # Code quality: Black formatted ✅
 │                                   # - MANUAL mode (exposure=30ms, gain=2)
 │                                   # - Percentile-based depth
 │                                   # - Coverage ~49% (optimized!)
 │                                   # - ROI extraction & stats
-├── test_pepper_adaptive.py        # 🌶️ Adaptive Percentile method ⭐ (Week 1)
+├── test_pepper_adaptive.py        # 🌶️ Adaptive Percentile method ⭐
+│                                   # Code quality: Black formatted ✅ (15 f-strings fixed)
 │                                   # - Percentile 5% if coverage < 25%
 │                                   # - Percentile 10% if coverage ≥ 25%
 │                                   # - Robust for curved objects
