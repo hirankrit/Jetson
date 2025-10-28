@@ -114,7 +114,7 @@
 
 ## 🎯 Current Status
 
-**Last Updated**: 2025-10-28 Night (Week 1 Extended - 100% COMPLETE! 🎉)
+**Last Updated**: 2025-10-28 Night (Week 2 Setup - Tools Ready! 🚀)
 
 ### Development Approach
 **เลือกใช้**: [Vision-First Roadmap](docs/11_vision_first_roadmap.md) ⭐
@@ -221,7 +221,10 @@
     - Automated workflow: Post-coding quality check ready!
     - Conclusion: System ready for production!
     - รายงานสรุป: ดูที่ Development Notes → LED Testing Results
-  - [ ] **Week 2: Dataset collection (500-1000 images)** ← กำลังเตรียม
+  - [ ] **Week 2: Dataset collection (500-1000 images)** ← กำลังทำ (Tools Ready!)
+    - [x] Day 6: Setup data collection tools
+    - [ ] Day 6-7: Collect images (500-1000 images)
+    - [ ] Day 8-10: Annotate with Roboflow/LabelImg
   - [ ] Week 3: YOLO training + evaluation
   - [ ] Week 4: Integration (detection + 3D positioning)
 - [ ] Phase 2: ROS2 Integration (Week 5-6)
@@ -381,6 +384,12 @@
     - Push 15 files (9 modified + 6 new)
     - เพิ่มเอกสาร LED Testing และ Camera Settings Final
     - เพิ่ม diagnostic tools (balance_brightness.py, diagnose_camera.py)
+72. ✅ **Week 2 Setup: Dataset Collection Tools** 🌶️ (2025-10-28 Night)
+    - สร้าง collect_dataset.py (stereo camera, 3 save modes)
+    - สร้าง DATASET_COLLECTION_GUIDE.md (complete guide)
+    - สร้าง prepare_dataset_structure.py (YOLO format)
+    - Code quality: Black + Flake8 (0 errors) ✅
+    - พร้อมเก็บ dataset 500-1000 ภาพ!
 
 ---
 
@@ -1204,6 +1213,26 @@ git reset --hard HEAD
 │                                   # - Black formatter + Flake8 linter
 │                                   # - F541 fix script (regex-based)
 │                                   # - Post-coding protocol
+│
+├── ============ 🌶️ Week 2: Dataset Collection Tools (2025-10-28 Night) ============ ⭐ NEW!
+├── collect_dataset.py              # Dataset collection tool
+│                                   # - Stereo camera support (left = primary)
+│                                   # - 3 save modes (left, left+right, left+right+depth)
+│                                   # - Optimized camera settings (exposure=30ms, gain=2)
+│                                   # - Real-time preview + statistics
+│                                   # - Metadata logging (YAML)
+│                                   # Code quality: Black formatted ✅
+├── DATASET_COLLECTION_GUIDE.md     # Complete dataset collection guide
+│                                   # - Collection strategy (500-1000 images)
+│                                   # - 6 classes definition
+│                                   # - Daily goals and checklist
+│                                   # - Annotation guide (Roboflow/LabelImg)
+│                                   # - Quality checklist
+├── prepare_dataset_structure.py   # Prepare YOLO dataset structure
+│                                   # - Create folders (images/labels, train/val)
+│                                   # - Generate data.yaml template
+│                                   # - Create README
+│                                   # Code quality: Black formatted ✅
 │
 ├── ============ 🔧 Diagnostic Tools (Week 1 Extended) ============
 ├── test_camera_focus.py            # Test camera focus and sharpness
