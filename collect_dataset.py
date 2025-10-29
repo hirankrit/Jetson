@@ -11,7 +11,7 @@ Features:
 - Organized folder structure
 
 Controls:
-  'c' - Capture image
+  SPACE - Capture image (with 3s countdown)
   's' - Toggle save mode (left only / left+right / left+right+depth)
   'q' - Quit and show summary
 """
@@ -22,6 +22,7 @@ import os
 import yaml
 from datetime import datetime
 import argparse
+import time
 
 
 def build_gstreamer_pipeline(
@@ -37,6 +38,7 @@ def build_gstreamer_pipeline(
     return (
         f"nvarguscamerasrc sensor-id={sensor_id} "
         f"wbmode=0 "
+        f"aelock=true "
         f'exposuretimerange="{exposure_ns} {exposure_ns}" '
         f'gainrange="{gain} {gain}" '
         f"! "
@@ -126,9 +128,9 @@ def main():
     print("  Mode 2: Left + Right (stereo pair)")
     print("  Mode 3: Left + Right + Depth (full data)")
     print("\n⌨️  Controls:")
-    print("  'c' - Capture image")
-    print("  's' - Toggle save mode (1/2/3)")
-    print("  'q' - Quit and show summary")
+    print("  SPACE - Capture image (3s countdown for stable focus)")
+    print("  's'   - Toggle save mode (1/2/3)")
+    print("  'q'   - Quit and show summary")
     print("=" * 80)
 
     # Load calibration for depth (optional)
@@ -227,7 +229,7 @@ def main():
 
         cv2.putText(
             display,
-            "Press 'c' to capture, 's' to change mode, 'q' to quit",
+            "Press SPACE to capture (3s countdown), 's' to change mode, 'q' to quit",
             (10, args.height - 20),
             cv2.FONT_HERSHEY_SIMPLEX,
             0.6,
@@ -252,8 +254,15 @@ def main():
                 save_mode = (save_mode % 3) + 1
             print(f"\n🔄 Save mode changed to: {mode_text[save_mode]}")
 
-        elif key == ord("c"):
-            # Capture
+        elif key == ord(" "):  # SPACE key
+            # Countdown before capture (allows focus to stabilize)
+            print(f"\n⏱️  Countdown: ", end="", flush=True)
+            for i in range(3, 0, -1):
+                print(f"{i}... ", end="", flush=True)
+                time.sleep(1)
+            print("📸")
+
+            # Now capture
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3]
             filename_base = f"pepper_{count:04d}_{timestamp}"
 

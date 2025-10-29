@@ -1505,3 +1505,90 @@ python3 test_pepper_depth.py
 ---
 
 **Happy Coding! 🌶️🤖**
+
+---
+
+## 📅 Week 2: Dataset Collection (Oct 28 - Nov 3, 2025)
+
+**Status:** 🔄 Re-collecting Dataset V2 (Quality Improvement)
+
+**Major Discovery & Fix:**
+- ⚠️ **Problem Found:** Auto-focus causing blurry images (texture not visible)
+- ✅ **Solution:** Added `aelock=true` to GStreamer pipeline
+- ✅ **Result:** Session 3.1 test - 12 images perfectly sharp with visible texture!
+- 🎯 **Decision:** Re-collect all sessions (1, 2, 3) for consistent quality
+
+**Key Achievements:**
+- ✅ Dataset Collection Tools Created (collect_dataset.py, prepare_dataset_structure.py)
+- ✅ Grid Layout Experiments (3 rounds - learned valuable lessons)
+- ✅ Manual Capture Method - Success!
+- ✅ **Focus Problem Solved** - aelock=true prevents auto-focus changes
+- ✅ Session 3.1 Test (Green Medium) - 12 images with perfect focus ✨
+
+**Dataset V1 (Initial Collection - Oct 29 AM):**
+```
+Session 1: 96 images (Red large)
+Session 2: 48 images (Red defects)
+Total: 144 images
+
+Issue: Auto-focus active → some images blurry, texture not clear
+Quality: 90-92% (Good but not consistent)
+```
+
+**Dataset V2 (Re-collection - Oct 29 PM):** ⏳ In Progress
+```
+Planned: 192 images (16 peppers × 12 angles)
+- Session 1: 96 images (8 red large)
+- Session 2: 48 images (4 red defects)
+- Session 3: 48 images (4 green varieties)
+
+Fix Applied: aelock=true (lock auto-exposure & auto-focus)
+Expected Quality: 100% sharp, consistent texture
+Estimated Time: ~60-75 minutes
+```
+
+**Technical Improvements:**
+- 🔧 Added `aelock=true` to prevent focus drift
+- 🔧 Changed capture key: 'c' → SPACE (easier to use)
+- 🔧 Added 3s countdown before capture (hand removal time)
+- 🔧 Created test_aelock.py for focus stability testing
+- 🔧 Variation test: 0.7-2% when stable (excellent!)
+
+**Key Learnings:**
+- ❌ Grid layout auto-crop requires professional setup (LED panel, smooth background)
+- ✅ Manual capture is reliable and fast (~4 min/pepper)
+- ⚠️ **Auto-focus is problematic** - hand in/out causes focus changes
+- ✅ **aelock=true solves the problem** - focus stays stable
+- 🎯 **Dataset quality > speed** - re-collection worth the time!
+
+**Workflow Improvements:**
+```
+Old: Place pepper → press 'c' → capture (may be blurry)
+New: Place pepper → remove hand → wait 3-5s → press SPACE → countdown → capture (always sharp!)
+```
+
+**New Tools Created:**
+- `test_aelock.py` - Test focus stability (variation check)
+- `setup_new_dataset.sh` - Backup old + create new structure
+- `DATASET_RECOLLECTION_GUIDE.md` - Complete re-collection guide
+- `collect_all_commands.sh` - All commands in one place
+
+**Detailed Progress Report:**
+See [Dataset Collection Report](docs/week2/dataset_collection.md) for:
+- Grid Layout Experiments (3 rounds, root cause analysis)
+- Manual Capture Method (pilot test, all sessions)
+- Focus problem discovery and solution
+- Dataset V1 vs V2 comparison
+- Complete re-collection workflow
+
+**Next Steps:**
+1. ✅ Complete Dataset V2 re-collection (192 images)
+2. 📝 Annotation with Roboflow/LabelImg (YOLO format)
+3. 🧪 Train/Val split preparation
+4. 🚀 Start YOLO training (Week 3)
+
+---
+
+**Last Updated:** Oct 29, 2025 04:30 PM
+**Status:** Ready to re-collect all sessions with improved focus quality!
+
