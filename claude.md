@@ -130,7 +130,8 @@
   - Green: 21 peppers, 252 images (4 sessions) ✅ COMPLETE!
 **Annotation Tool**: CVAT (Open Source, Self-hosted) ✅ Selected!
   - Reason: Auto-annotation, Professional workflow, Scalable, QC system
-  - Status: Ready for installation
+  - Status: Docker installed ✅, Ready for CVAT
+**Docker**: v28.5.1 + Docker Compose v2.40.3 ✅ Installed!
 
 ### Project Phase (Vision-First)
 - [x] ออกแบบ overall architecture เสร็จสมบูรณ์
@@ -255,8 +256,12 @@
       - **Reasons**: Auto-annotation, Professional workflow, Scalable, QC system
       - **Commercial project**: Data privacy + Local hosting required
       - **Free**: MIT License, $0 cost, Unlimited usage
-    - [ ] Day 2: Install Docker + Docker Compose ← Next
-    - [ ] Day 2: Install CVAT on Jetson
+    - [x] Day 2: Install Docker + Docker Compose ✅ DONE
+      - Docker v28.5.1 (arm64v8)
+      - Docker Compose v2.40.3
+      - Service: active and enabled
+      - Test: hello-world passed ✅
+    - [ ] Day 2: Install CVAT on Jetson ← Next (after logout/login)
     - [ ] Day 3: Upload images (709 images)
     - [ ] Day 3-4: Auto-annotation + Review
     - [ ] Day 5: Export YOLO format
@@ -544,6 +549,25 @@
       - ✅ Free (MIT License, $0 cost)
       - ✅ Commercial use allowed
     - **Next**: Install Docker + CVAT on Jetson
+91. 🐳 **Docker Installation Complete** (2025-10-31 Evening)
+    - **Docker**: v28.5.1 (latest stable)
+    - **Docker Compose**: v2.40.3 (latest)
+    - **Architecture**: arm64v8 (Jetson Orin Nano)
+    - **Installation**:
+      - ✅ Downloaded official installation script
+      - ✅ Installed Docker engine
+      - ✅ Added user 'jay' to docker group
+      - ✅ Service: active and enabled (auto-start)
+      - ✅ Test: hello-world container passed ✅
+    - **Performance**:
+      - Installation time: ~10 minutes
+      - First image pull: hello-world (arm64v8) successful
+      - Memory usage: 25.8MB (idle)
+    - **Next Steps**:
+      - Logout/login to activate docker group (no sudo required)
+      - Clone CVAT repository
+      - Configure CVAT for Jetson
+      - Start CVAT services
 
 ---
 
@@ -1899,6 +1923,6 @@ Place pepper → Remove hand → Wait 3-5s → Press SPACE → Countdown 3s → 
 
 ---
 
-**Last Updated:** Oct 31, 2025 (Week 3 Started - CVAT Selected! 🎉)
-**Status:** 🟢 Week 3 Day 1 - Annotation tool: CVAT (Self-hosted) - Next: Docker installation
+**Last Updated:** Oct 31, 2025 (Week 3 Day 2 - Docker Installed! 🎉)
+**Status:** 🟢 Week 3 Day 2 - Docker v28.5.1 ready - Next: Install CVAT
 
