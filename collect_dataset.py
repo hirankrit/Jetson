@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
 """
 Pepper Dataset Collection Tool
-Collect images for YOLO training using stereo camera
+Collect FULL stereo dataset (Left + Right + Depth) for YOLO training
 
 Features:
-- Use left camera for primary dataset
-- Optimized camera settings (exposure=30ms, gain=2)
-- Optional: Save right image and depth for future use
+- Stereo camera capture (left + right)
+- Depth map computation (StereoSGBM)
+- Optimized camera settings (exposure=30ms, gain=2, aelock=true)
 - Real-time preview with statistics
 - Organized folder structure
 
 Controls:
   SPACE - Capture image (with 3s countdown)
-  's' - Toggle save mode (left only / left+right / left+right+depth)
   'q' - Quit and show summary
 """
 
@@ -23,6 +22,157 @@ import yaml
 from datetime import datetime
 import argparse
 import time
+
+
+def create_hardware_config(args, baseline, focal_length):
+    """
+    Create comprehensive hardware configuration for reproducibility
+    Includes all 7 categories of camera parameters
+    """
+    config = {
+        "metadata_version": "1.0",
+        "creation_date": datetime.now().isoformat(),
+        "description": "Hardware configuration for pepper dataset collection",
+        # ========== 1. Exposure & Light Sensitivity ==========
+        "exposure_and_light": {
+            "exposure_time_ms": args.exposure,
+            "exposure_time_ns": args.exposure * 1000000,
+            "gain_iso": args.gain,
+            "auto_exposure": False,
+            "ae_lock": True,
+            "notes": "MANUAL mode with fixed exposure/gain to prevent flickering",
+        },
+        # ========== 2. White Balance & Color ==========
+        "white_balance_and_color": {
+            "white_balance_mode": "manual",  # wbmode=0
+            "awb_lock": True,
+            "color_temperature_k": None,  # Not set (using manual mode)
+            "saturation_percent": None,  # Default
+            "hue_shift_deg": 0,  # Default
+            "notes": "Manual white balance to ensure color consistency",
+        },
+        # ========== 3. Image Enhancement ==========
+        "image_enhancement": {
+            "brightness": None,  # Default (not modified)
+            "contrast": None,  # Default (not modified)
+            "gamma": None,  # Default (not modified)
+            "sharpness": None,  # Default (not modified)
+            "notes": "Using GStreamer defaults, no post-processing applied",
+        },
+        # ========== 4. Noise & Dynamic Range ==========
+        "noise_and_dynamic_range": {
+            "denoise": None,  # Default
+            "temporal_noise_reduction": None,  # Default
+            "backlight_compensation": False,
+            "hdr": False,
+            "notes": "Standard dynamic range, no special noise reduction",
+        },
+        # ========== 5. Focus & Aperture ==========
+        "focus_and_aperture": {
+            "focus_mode": "manual",
+            "focus_value_left": 176.5,
+            "focus_value_right": 171.0,
+            "focus_difference": 5.5,
+            "aperture": "fixed",  # IMX219 has fixed aperture
+            "notes": "Focus manually adjusted and locked before collection",
+        },
+        # ========== 6. Frame & Timing ==========
+        "frame_and_timing": {
+            "frame_rate_fps": 15,
+            "resolution_width": args.width,
+            "resolution_height": args.height,
+            "pixel_format": "NV12 -> BGRx -> BGR",
+            "ae_antibanding_hz": None,  # Not set
+            "notes": "15 FPS for stable capture with 3s countdown",
+        },
+        # ========== 7. External Lighting ==========
+        "external_lighting": {
+            "led_count": 3,
+            "led_type": "White LED strips",
+            "led_positions": [
+                {
+                    "name": "Top LED",
+                    "position": "overhead",
+                    "distance_from_target_cm": 10,
+                    "angle_deg": 0,
+                    "notes": "Mounted above camera, reduces shadows",
+                },
+                {
+                    "name": "Left LED",
+                    "position": "left-front diagonal",
+                    "distance_from_target_cm": 10,
+                    "angle_deg": 45,
+                    "notes": "Diagonal lighting from left side",
+                },
+                {
+                    "name": "Right LED",
+                    "position": "right-front diagonal",
+                    "distance_from_target_cm": 10,
+                    "angle_deg": 45,
+                    "notes": "Diagonal lighting from right side",
+                },
+            ],
+            "ambient_light": "indoor",
+            "notes": "3-point LED setup optimized for even illumination",
+        },
+        # ========== Hardware Setup ==========
+        "hardware_setup": {
+            "camera_model": "IMX219-83 Stereo Camera",
+            "sensor_resolution": "8MP (3280x2464)",
+            "fov_deg": 160,
+            "baseline_mm": baseline,
+            "focal_length_px": focal_length,
+            "camera_height_mm": 320,
+            "camera_angle": "top-down view (perpendicular to surface)",
+            "mounting": "fixed tripod mount",
+        },
+        # ========== Environment ==========
+        "environment": {
+            "background": "gray cloth",
+            "background_material": "non-reflective fabric",
+            "surface": "flat table with gray cloth",
+            "working_distance_cm": "23-35",
+            "temperature_c": None,  # Not measured
+            "humidity_percent": None,  # Not measured
+            "notes": "Controlled indoor environment with gray background",
+        },
+        # ========== GStreamer Pipeline ==========
+        "gstreamer_pipeline": {
+            "source": "nvarguscamerasrc",
+            "wbmode": 0,
+            "aelock": True,
+            "flip_method": 0,
+            "full_pipeline": (
+                f"nvarguscamerasrc sensor-id=<ID> "
+                f"wbmode=0 aelock=true "
+                f'exposuretimerange="<EXPOSURE> <EXPOSURE>" '
+                f'gainrange="<GAIN> <GAIN>" ! '
+                f"video/x-raw(memory:NVMM), width=<W>, height=<H>, "
+                f"format=NV12, framerate=15/1 ! "
+                f"nvvidconv flip-method=0 ! "
+                f"video/x-raw, format=BGRx ! videoconvert ! "
+                f"video/x-raw, format=BGR ! appsink"
+            ),
+        },
+        # ========== Stereo Calibration ==========
+        "stereo_calibration": {
+            "calibration_file": "stereo_calib.yaml",
+            "calibration_date": None,  # Will be read from file if available
+            "pattern_type": "Asymmetric Circles Grid (5x6, 33 circles)",
+            "pattern_spacing_mm": 18,
+            "baseline_measured_mm": baseline,
+            "focal_length_px": focal_length,
+        },
+        # ========== Dataset Information ==========
+        "dataset_info": {
+            "session_name": os.path.basename(args.output),
+            "output_directory": args.output,
+            "save_mode": "full (left + right + depth)",
+            "depth_computation": "StereoSGBM",
+            "depth_range_mm": "150-1200",
+        },
+    }
+    return config
 
 
 def build_gstreamer_pipeline(
@@ -115,7 +265,7 @@ def main():
     os.makedirs(f"{output_dir}/metadata", exist_ok=True)
 
     print("=" * 80)
-    print("🌶️  PEPPER DATASET COLLECTION TOOL")
+    print("🌶️  PEPPER DATASET COLLECTION TOOL - FULL MODE")
     print("=" * 80)
     print(f"\nOutput directory: {output_dir}")
     print(f"Resolution: {args.width}x{args.height}")
@@ -123,17 +273,15 @@ def main():
     print(f"  Exposure: {args.exposure}ms (fixed)")
     print(f"  Gain: {args.gain} (fixed)")
     print("  White Balance: Manual")
-    print("\n📊 Save Modes:")
-    print("  Mode 1: Left only (for YOLO training) - Default")
-    print("  Mode 2: Left + Right (stereo pair)")
-    print("  Mode 3: Left + Right + Depth (full data)")
+    print("  Auto-Exposure Lock: Enabled")
+    print("\n📊 Save Mode:")
+    print("  ✅ Left + Right + Depth (Full stereo dataset)")
     print("\n⌨️  Controls:")
     print("  SPACE - Capture image (3s countdown for stable focus)")
-    print("  's'   - Toggle save mode (1/2/3)")
     print("  'q'   - Quit and show summary")
     print("=" * 80)
 
-    # Load calibration for depth (optional)
+    # Load calibration for depth (required for Mode 3)
     calib_available = False
     try:
         with open("stereo_calib.yaml", "r") as f:
@@ -143,10 +291,22 @@ def main():
         Q = np.array(calib["stereo"]["Q_matrix"])
         focal_length = abs(Q[2, 3])
         calib_available = True
-        print("\n✓ Calibration loaded (depth computation available)")
-    except Exception:
-        print("\n⚠️  Calibration not found (depth computation disabled)")
-        print("   Only left/right images will be saved")
+        print("\n✅ Calibration loaded successfully!")
+        print(f"   Baseline: {baseline:.2f}mm, Focal: {focal_length:.2f}px")
+    except Exception as e:
+        print("\n❌ ERROR: Calibration not found!")
+        print("   Depth computation requires stereo_calib.yaml")
+        print(f"   Error: {e}")
+        return
+
+    # Save hardware configuration
+    print("\n💾 Saving hardware configuration...")
+    hardware_config = create_hardware_config(args, baseline, focal_length)
+    hardware_config_path = f"{output_dir}/metadata/hardware_config.yaml"
+    with open(hardware_config_path, "w") as f:
+        yaml.dump(hardware_config, f, default_flow_style=False, sort_keys=False)
+    print(f"   ✅ Saved: {hardware_config_path}")
+    print("   📋 Complete camera parameters logged (7 categories)")
 
     # Setup cameras
     left_pipeline = build_gstreamer_pipeline(
@@ -173,11 +333,11 @@ def main():
         return
 
     print("✓ Cameras ready")
-    print("\n👉 Press 'c' to start capturing...")
+    print("\n👉 Press SPACE to start capturing...")
 
     # State variables
     count = 0
-    save_mode = 1  # 1=left only, 2=left+right, 3=left+right+depth
+    save_mode = 3  # Fixed: Always save left+right+depth
     metadata_log = []
 
     cv2.namedWindow("Dataset Collection", cv2.WINDOW_NORMAL)
@@ -195,7 +355,7 @@ def main():
         display = frame_left.copy()
         cv2.putText(
             display,
-            f"Dataset Collection - Mode {save_mode}",
+            "Dataset Collection - FULL MODE",
             (10, 30),
             cv2.FONT_HERSHEY_SIMPLEX,
             0.8,
@@ -212,14 +372,9 @@ def main():
             2,
         )
 
-        mode_text = {
-            1: "Left only",
-            2: "Left + Right",
-            3: "Left + Right + Depth",
-        }
         cv2.putText(
             display,
-            f"Mode: {mode_text[save_mode]}",
+            "Mode: Left + Right + Depth",
             (10, 100),
             cv2.FONT_HERSHEY_SIMPLEX,
             0.7,
@@ -229,7 +384,7 @@ def main():
 
         cv2.putText(
             display,
-            "Press SPACE to capture (3s countdown), 's' to change mode, 'q' to quit",
+            "Press SPACE to capture (3s countdown), 'q' to quit",
             (10, args.height - 20),
             cv2.FONT_HERSHEY_SIMPLEX,
             0.6,
@@ -243,16 +398,6 @@ def main():
 
         if key == ord("q"):
             break
-
-        elif key == ord("s"):
-            # Toggle save mode
-            if not calib_available and save_mode == 2:
-                save_mode = 1
-            elif not calib_available:
-                save_mode = (save_mode % 2) + 1
-            else:
-                save_mode = (save_mode % 3) + 1
-            print(f"\n🔄 Save mode changed to: {mode_text[save_mode]}")
 
         elif key == ord(" "):  # SPACE key
             # Countdown before capture (allows focus to stabilize)
@@ -268,53 +413,53 @@ def main():
 
             print(f"\n📸 Capturing #{count + 1}...")
 
-            # Save left image (always)
+            # Save left image
             left_path = f"{output_dir}/raw/left/{filename_base}.jpg"
             cv2.imwrite(left_path, frame_left)
             print(f"  ✓ Left: {left_path}")
+
+            # Save right image
+            right_path = f"{output_dir}/raw/right/{filename_base}.jpg"
+            cv2.imwrite(right_path, frame_right)
+            print(f"  ✓ Right: {right_path}")
+
+            # Compute and save depth
+            gray_left = cv2.cvtColor(frame_left, cv2.COLOR_BGR2GRAY)
+            gray_right = cv2.cvtColor(frame_right, cv2.COLOR_BGR2GRAY)
+
+            depth_map, mask = compute_depth_map(
+                gray_left, gray_right, baseline, focal_length
+            )
+
+            # Visualize depth
+            depth_vis = depth_map.copy()
+            depth_vis[~mask] = 0
+            depth_vis = np.clip(depth_vis, 150, 1200)
+            depth_vis = ((depth_vis - 150) / 1050 * 255).astype(np.uint8)
+            depth_colored = cv2.applyColorMap(depth_vis, cv2.COLORMAP_JET)
+            depth_colored[~mask] = [0, 0, 0]
+
+            depth_path = f"{output_dir}/raw/depth/{filename_base}.jpg"
+            cv2.imwrite(depth_path, depth_colored)
+            print(f"  ✓ Depth: {depth_path}")
+
+            coverage = np.sum(mask) / (args.width * args.height) * 100
 
             # Metadata
             meta = {
                 "id": count,
                 "timestamp": timestamp,
-                "mode": save_mode,
+                "mode": 3,
                 "resolution": f"{args.width}x{args.height}",
                 "exposure_ms": args.exposure,
                 "gain": args.gain,
-                "files": {"left": f"raw/left/{filename_base}.jpg"},
+                "depth_coverage": f"{coverage:.1f}%",
+                "files": {
+                    "left": f"raw/left/{filename_base}.jpg",
+                    "right": f"raw/right/{filename_base}.jpg",
+                    "depth": f"raw/depth/{filename_base}.jpg",
+                },
             }
-
-            # Save right image (mode 2, 3)
-            if save_mode >= 2:
-                right_path = f"{output_dir}/raw/right/{filename_base}.jpg"
-                cv2.imwrite(right_path, frame_right)
-                print(f"  ✓ Right: {right_path}")
-                meta["files"]["right"] = f"raw/right/{filename_base}.jpg"
-
-            # Compute and save depth (mode 3)
-            if save_mode == 3 and calib_available:
-                gray_left = cv2.cvtColor(frame_left, cv2.COLOR_BGR2GRAY)
-                gray_right = cv2.cvtColor(frame_right, cv2.COLOR_BGR2GRAY)
-
-                depth_map, mask = compute_depth_map(
-                    gray_left, gray_right, baseline, focal_length
-                )
-
-                # Visualize depth
-                depth_vis = depth_map.copy()
-                depth_vis[~mask] = 0
-                depth_vis = np.clip(depth_vis, 150, 1200)
-                depth_vis = ((depth_vis - 150) / 1050 * 255).astype(np.uint8)
-                depth_colored = cv2.applyColorMap(depth_vis, cv2.COLORMAP_JET)
-                depth_colored[~mask] = [0, 0, 0]
-
-                depth_path = f"{output_dir}/raw/depth/{filename_base}.jpg"
-                cv2.imwrite(depth_path, depth_colored)
-                print(f"  ✓ Depth: {depth_path}")
-
-                coverage = np.sum(mask) / (args.width * args.height) * 100
-                meta["depth_coverage"] = f"{coverage:.1f}%"
-                meta["files"]["depth"] = f"raw/depth/{filename_base}.jpg"
 
             metadata_log.append(meta)
             count += 1
@@ -351,14 +496,11 @@ def main():
     print("=" * 80)
     print(f"Total images collected: {count}")
     print(f"Output directory: {output_dir}")
-    print("\nFiles saved:")
+    print("\nFiles saved (Full stereo dataset):")
     print(f"  - Left images:  {count}")
-    if any(m["mode"] >= 2 for m in metadata_log):
-        right_count = sum(1 for m in metadata_log if m["mode"] >= 2)
-        print(f"  - Right images: {right_count}")
-    if any(m["mode"] == 3 for m in metadata_log):
-        depth_count = sum(1 for m in metadata_log if m["mode"] == 3)
-        print(f"  - Depth maps:   {depth_count}")
+    print(f"  - Right images: {count}")
+    print(f"  - Depth maps:   {count}")
+    print(f"  - Total files:  {count * 3}")
 
     print("\n🎯 Next steps:")
     print("  1. Review collected images")

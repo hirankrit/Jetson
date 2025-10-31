@@ -114,7 +114,7 @@
 
 ## 🎯 Current Status
 
-**Last Updated**: 2025-10-28 Night (Week 2 Setup - Tools Ready! 🚀)
+**Last Updated**: 2025-10-31 (Week 3 Started - Annotation Tool Selected! 🎉)
 
 ### Development Approach
 **เลือกใช้**: [Vision-First Roadmap](docs/11_vision_first_roadmap.md) ⭐
@@ -124,6 +124,13 @@
 **Camera Settings**: Exposure=30ms, Gain=2 (OPTIMIZED) ✅
 **AI Framework**: PyTorch 2.9.0 + CUDA 12.6 ✅ พร้อมใช้งาน
 **Code Quality**: Black + Flake8 + Automated Workflow ✅ พร้อมใช้งาน
+**Dataset Collection**: Mode 3 (Left + Right + Depth) with hardware_config.yaml ✅
+**Dataset Progress**: 59 peppers, 709 images, 2,127 files (71% of target) 🎉
+  - Red: 38 peppers, 457 images (6 sessions) ✅ COMPLETE!
+  - Green: 21 peppers, 252 images (4 sessions) ✅ COMPLETE!
+**Annotation Tool**: CVAT (Open Source, Self-hosted) ✅ Selected!
+  - Reason: Auto-annotation, Professional workflow, Scalable, QC system
+  - Status: Ready for installation
 
 ### Project Phase (Vision-First)
 - [x] ออกแบบ overall architecture เสร็จสมบูรณ์
@@ -221,11 +228,40 @@
     - Automated workflow: Post-coding quality check ready!
     - Conclusion: System ready for production!
     - รายงานสรุป: ดูที่ Development Notes → LED Testing Results
-  - [ ] **Week 2: Dataset collection (500-1000 images)** ← กำลังทำ (Tools Ready!)
+  - [x] **Week 2: Dataset collection (500-1000 images)** ✅ COMPLETE! (709 images = 71%)
     - [x] Day 6: Setup data collection tools
-    - [ ] Day 6-7: Collect images (500-1000 images)
-    - [ ] Day 8-10: Annotate with Roboflow/LabelImg
-  - [ ] Week 3: YOLO training + evaluation
+    - [x] Day 6-7: Collect images (500-1000 images) ✅ DONE (709/500-1000)
+      - [x] **Breakthrough:** Modified collect_dataset.py to Mode 3 only (Oct 31)
+      - [x] **Breakthrough:** Added hardware_config.yaml system (7 categories) (Oct 31)
+      - [x] **Red Sessions - ALL COMPLETE!** 🎉
+        - [x] Session 1a: Red Large - 10 peppers, 120 images ✅
+        - [x] Session 1b: Red Small - 7 peppers, 84 images ✅
+        - [x] Session 2a: Red Rotten - 7 peppers, 84 images ✅
+        - [x] Session 2b: Red Wrinkled - 3 peppers, 37 images ✅
+        - [x] Session 2c: Red Deformed - 7 peppers, 84 images ✅
+        - [x] Session 2d: Red Insect - 4 peppers, 48 images ✅
+        - **Red Total:** 38 peppers, 457 images, 1,371 files
+      - [x] **Green Sessions - COMPLETE!** 🎉
+        - [x] Session 3a: Green Rotten - 2 peppers, 24 images ✅
+        - [x] Session 3b: Green Insect - 1 pepper, 12 images ✅
+        - [x] Session 3c: Green Medium V2 - 11 peppers, 132 images ✅
+        - [x] Session 3d: Green Small V2 - 7 peppers, 84 images ✅
+        - **Green Total:** 21 peppers, 252 images, 756 files
+      - [ ] Session 4+: Yellow (skipped - not available yet)
+    - [x] Day 8: Annotation tool selection ✅ CVAT chosen!
+  - [ ] **Week 3: Annotation + YOLO training** ← กำลังทำ
+    - [x] Day 1: Evaluate annotation tools (Roboflow vs LabelImg vs CVAT)
+    - [x] Day 1: Decision: CVAT Open Source (Self-hosted) ✅
+      - **Reasons**: Auto-annotation, Professional workflow, Scalable, QC system
+      - **Commercial project**: Data privacy + Local hosting required
+      - **Free**: MIT License, $0 cost, Unlimited usage
+    - [ ] Day 2: Install Docker + Docker Compose ← Next
+    - [ ] Day 2: Install CVAT on Jetson
+    - [ ] Day 3: Upload images (709 images)
+    - [ ] Day 3-4: Auto-annotation + Review
+    - [ ] Day 5: Export YOLO format
+    - [ ] Day 6-7: Train YOLOv8 model
+    - [ ] Day 8: Model evaluation
   - [ ] Week 4: Integration (detection + 3D positioning)
 - [ ] Phase 2: ROS2 Integration (Week 5-6)
 - [ ] Phase 3-5: Robot Arms + Full System (Week 7-12)
@@ -390,6 +426,124 @@
     - สร้าง prepare_dataset_structure.py (YOLO format)
     - Code quality: Black + Flake8 (0 errors) ✅
     - พร้อมเก็บ dataset 500-1000 ภาพ!
+73. 🎉 **Breakthrough: Hardware Config System** (2025-10-31)
+    - **User insight:** "ถ้าไม่ทำพร้อมกัน พริกมันจะเน่าหมดก่อน"
+    - **Decision:** เก็บ full stereo data (left+right+depth) ทุกครั้ง
+    - แก้ไข collect_dataset.py → Mode 3 only
+    - สร้าง `create_hardware_config()` function
+    - Auto-save hardware_config.yaml ทุก session
+74. ✅ **Hardware Config: 7 Categories of Camera Parameters** 📸 (2025-10-31)
+    - 1. Exposure & Light Sensitivity (exposure, gain, aelock)
+    - 2. White Balance & Color (wbmode, awb_lock)
+    - 3. Image Enhancement (brightness, contrast, gamma, sharpness)
+    - 4. Noise & Dynamic Range (denoise, TNR, HDR)
+    - 5. Focus & Aperture (focus values: 176.5/171.0)
+    - 6. Frame & Timing (fps, resolution, format)
+    - 7. External Lighting (3 LEDs with positions/distances)
+    - + Hardware Setup, Environment, Pipeline, Calibration, Dataset Info
+75. ✅ **สร้าง HARDWARE_CONFIG_REFERENCE.md** 📚 (2025-10-31)
+    - Complete documentation: ทุก parameter อธิบายละเอียด
+    - Use cases: Reproduce, Compare, Debug, Academic
+    - Examples: Session comparison, checklist
+    - Benefits: Complete reproducibility! 🎉
+76. ✅ **Session 1: Red Large** 🌶️ (2025-10-31)
+    - 10 peppers × 12 angles = 120 images
+    - Full stereo dataset: 360 files (left+right+depth)
+    - hardware_config.yaml saved ✅
+    - collection_log.yaml saved ✅
+    - Quality: Excellent (sharp, consistent texture)
+77. ✅ **Session 1b: Red Small** 🌶️ (2025-10-31)
+    - 7 peppers × 12 angles = 84 images
+    - Full stereo dataset: 252 files (left+right+depth)
+    - hardware_config.yaml saved ✅
+    - collection_log.yaml saved ✅
+    - Quality: Excellent
+78. ✅ **Session 2a: Red Rotten** 🌶️ (2025-10-31)
+    - 6 peppers × 12 angles = 72 images
+    - Full stereo dataset: 216 files (left+right+depth)
+    - hardware_config.yaml saved ✅
+    - collection_log.yaml saved ✅
+    - Quality: Excellent
+79. ✅ **Session 2b: Red Wrinkled** 🌶️ (2025-10-31)
+    - 2 peppers × 12 angles = 24 images (collected in 2 rounds)
+    - Full stereo dataset: 72 files (left+right+depth)
+    - hardware_config.yaml saved ✅
+    - collection_log.yaml saved ✅
+    - Quality: Excellent
+80. ✅ **Session 2c: Red Deformed** 🌶️ (2025-10-31)
+    - 6 peppers × 12 angles = 72 images
+    - Full stereo dataset: 216 files (left+right+depth)
+    - hardware_config.yaml saved ✅
+    - collection_log.yaml saved ✅
+    - Quality: Excellent
+81. ✅ **Session 2d: Red Insect** 🌶️ (2025-10-31)
+    - 3 peppers × 12 angles = 36 images
+    - Full stereo dataset: 108 files (left+right+depth)
+    - hardware_config.yaml saved ✅
+    - collection_log.yaml saved ✅
+    - Quality: Excellent
+82. 🎉 **Red Sessions Complete!** (2025-10-31)
+    - 6 sessions total (1a, 1b, 2a, 2b, 2c, 2d)
+    - 38 peppers, 457 images, 1,371 files (updated counts)
+    - Progress: 41-81% of target (500-1000 images)
+    - All red varieties collected: Large, Small, Rotten, Wrinkled, Deformed, Insect
+    - Next: Green varieties
+83. ✅ **Session 3a: Green Rotten** 🌶️ (2025-10-31 Afternoon)
+    - 2 peppers × 12 angles = 24 images
+    - Full stereo dataset: 72 files (left+right+depth)
+    - hardware_config.yaml saved ✅
+    - collection_log.yaml saved ✅
+    - Quality: Excellent
+84. ✅ **Session 3b: Green Insect** 🌶️ (2025-10-31 Afternoon)
+    - 1 pepper × 12 angles = 12 images
+    - Full stereo dataset: 36 files (left+right+depth)
+    - hardware_config.yaml saved ✅
+    - collection_log.yaml saved ✅
+    - Quality: Excellent
+85. ✅ **Session 3c: Green Medium V2** 🌶️ (2025-10-31 Afternoon)
+    - 11 peppers × 12 angles = 132 images
+    - Full stereo dataset: 396 files (left+right+depth)
+    - hardware_config.yaml saved ✅
+    - collection_log.yaml saved ✅
+    - Quality: Excellent
+86. 🎉 **Green Sessions Complete!** (2025-10-31)
+    - 3 sessions total (3a, 3b, 3c)
+    - 14 peppers, 168 images, 504 files
+    - All with full stereo data (left + right + depth)
+    - Next: Optional Green Small V2 or Yellow varieties
+87. 📊 **Dataset Milestone Reached!** (2025-10-31)
+    - **Total**: 52 peppers, 625 images, 1,875 files
+    - **Red**: 38 peppers, 457 images (6 sessions)
+    - **Green**: 14 peppers, 168 images (3 sessions)
+    - **Progress**: 62-125% of target (500-1000 images) 🎉
+    - **Status**: Ready for annotation or continue collection
+88. ✅ **Session 3d: Green Small V2** 🌶️ (2025-10-31 Afternoon)
+    - 7 peppers × 12 angles = 84 images
+    - Full stereo dataset: 252 files (left+right+depth)
+    - hardware_config.yaml saved ✅
+    - collection_log.yaml saved ✅
+    - Quality: Excellent
+89. 🎉 **Dataset Collection 71% Complete!** (2025-10-31)
+    - **Total**: 59 peppers, 709 images, 2,127 files
+    - **Red**: 38 peppers, 457 images (6 sessions) ✅
+    - **Green**: 21 peppers, 252 images (4 sessions) ✅
+    - **Progress**: 71-142% of target (500-1000 images) 🎉
+    - **Status**: Excellent progress! Ready for annotation or Yellow collection
+90. 🔍 **Week 3 Started: Annotation Tool Selection** (2025-10-31 Evening)
+    - Evaluated 3 options: Roboflow vs LabelImg vs CVAT
+    - **Decision**: CVAT Open Source (Self-hosted) ✅
+    - **Comparison**:
+      - ❌ Roboflow: Web-based, Auto-label BUT data on cloud (privacy concern for commercial)
+      - ⚠️ LabelImg: Offline, Simple BUT no auto-annotation (6-8 hours manual work)
+      - ✅ **CVAT**: Self-hosted, Auto-annotation, Professional, QC system, Scalable
+    - **Key Factors for Commercial Project**:
+      - ✅ Data privacy (local hosting)
+      - ✅ Auto-annotation with SAM/YOLO (save 50-70% time)
+      - ✅ Professional workflow + QC system
+      - ✅ Scalable (multi-user ready)
+      - ✅ Free (MIT License, $0 cost)
+      - ✅ Commercial use allowed
+    - **Next**: Install Docker + CVAT on Jetson
 
 ---
 
@@ -1214,13 +1368,18 @@ git reset --hard HEAD
 │                                   # - F541 fix script (regex-based)
 │                                   # - Post-coding protocol
 │
-├── ============ 🌶️ Week 2: Dataset Collection Tools (2025-10-28 Night) ============ ⭐ NEW!
-├── collect_dataset.py              # Dataset collection tool
-│                                   # - Stereo camera support (left = primary)
-│                                   # - 3 save modes (left, left+right, left+right+depth)
-│                                   # - Optimized camera settings (exposure=30ms, gain=2)
+├── ============ 🌶️ Week 2: Dataset Collection Tools (2025-10-28 ~ 10-31) ============ ⭐
+├── collect_dataset.py v2.0         # Dataset collection tool - FULL MODE ONLY 🎉
+│                                   # v2.0 Changes (Oct 31):
+│                                   # - Mode 3 ONLY: Always save left+right+depth
+│                                   # - Auto-save hardware_config.yaml (7 categories)
+│                                   # - Removed mode toggle ('s' key)
+│                                   # - Error handling: require calibration file
+│                                   # v1.0 Features:
+│                                   # - Stereo camera support
+│                                   # - Optimized settings (exposure=30ms, gain=2, aelock=true)
 │                                   # - Real-time preview + statistics
-│                                   # - Metadata logging (YAML)
+│                                   # - Metadata logging (collection_log.yaml)
 │                                   # Code quality: Black formatted ✅
 ├── DATASET_COLLECTION_GUIDE.md     # Complete dataset collection guide
 │                                   # - Collection strategy (500-1000 images)
@@ -1228,6 +1387,11 @@ git reset --hard HEAD
 │                                   # - Daily goals and checklist
 │                                   # - Annotation guide (Roboflow/LabelImg)
 │                                   # - Quality checklist
+├── HARDWARE_CONFIG_REFERENCE.md    # Hardware config documentation ⭐ NEW! (Oct 31)
+│                                   # - 7 Categories of Camera Parameters explained
+│                                   # - Reproducibility guide
+│                                   # - Session comparison examples
+│                                   # - Use cases (reproduce, debug, academic)
 ├── prepare_dataset_structure.py   # Prepare YOLO dataset structure
 │                                   # - Create folders (images/labels, train/val)
 │                                   # - Generate data.yaml template
@@ -1510,85 +1674,231 @@ python3 test_pepper_depth.py
 
 ## 📅 Week 2: Dataset Collection (Oct 28 - Nov 3, 2025)
 
-**Status:** 🔄 Re-collecting Dataset V2 (Quality Improvement)
+**Status:** 🟢 In Progress - FULL MODE Collection (Left + Right + Depth)
 
-**Major Discovery & Fix:**
-- ⚠️ **Problem Found:** Auto-focus causing blurry images (texture not visible)
-- ✅ **Solution:** Added `aelock=true` to GStreamer pipeline
-- ✅ **Result:** Session 3.1 test - 12 images perfectly sharp with visible texture!
-- 🎯 **Decision:** Re-collect all sessions (1, 2, 3) for consistent quality
+### 🎉 Major Breakthrough: Complete Hardware Config System!
 
-**Key Achievements:**
-- ✅ Dataset Collection Tools Created (collect_dataset.py, prepare_dataset_structure.py)
-- ✅ Grid Layout Experiments (3 rounds - learned valuable lessons)
-- ✅ Manual Capture Method - Success!
-- ✅ **Focus Problem Solved** - aelock=true prevents auto-focus changes
-- ✅ Session 3.1 Test (Green Medium) - 12 images with perfect focus ✨
+**Date:** Oct 31, 2025
 
-**Dataset V1 (Initial Collection - Oct 29 AM):**
-```
-Session 1: 96 images (Red large)
-Session 2: 48 images (Red defects)
-Total: 144 images
-
-Issue: Auto-focus active → some images blurry, texture not clear
-Quality: 90-92% (Good but not consistent)
-```
-
-**Dataset V2 (Re-collection - Oct 29 PM):** ⏳ In Progress
-```
-Planned: 192 images (16 peppers × 12 angles)
-- Session 1: 96 images (8 red large)
-- Session 2: 48 images (4 red defects)
-- Session 3: 48 images (4 green varieties)
-
-Fix Applied: aelock=true (lock auto-exposure & auto-focus)
-Expected Quality: 100% sharp, consistent texture
-Estimated Time: ~60-75 minutes
-```
-
-**Technical Improvements:**
-- 🔧 Added `aelock=true` to prevent focus drift
-- 🔧 Changed capture key: 'c' → SPACE (easier to use)
-- 🔧 Added 3s countdown before capture (hand removal time)
-- 🔧 Created test_aelock.py for focus stability testing
-- 🔧 Variation test: 0.7-2% when stable (excellent!)
-
-**Key Learnings:**
-- ❌ Grid layout auto-crop requires professional setup (LED panel, smooth background)
-- ✅ Manual capture is reliable and fast (~4 min/pepper)
-- ⚠️ **Auto-focus is problematic** - hand in/out causes focus changes
-- ✅ **aelock=true solves the problem** - focus stays stable
-- 🎯 **Dataset quality > speed** - re-collection worth the time!
-
-**Workflow Improvements:**
-```
-Old: Place pepper → press 'c' → capture (may be blurry)
-New: Place pepper → remove hand → wait 3-5s → press SPACE → countdown → capture (always sharp!)
-```
-
-**New Tools Created:**
-- `test_aelock.py` - Test focus stability (variation check)
-- `setup_new_dataset.sh` - Backup old + create new structure
-- `DATASET_RECOLLECTION_GUIDE.md` - Complete re-collection guide
-- `collect_all_commands.sh` - All commands in one place
-
-**Detailed Progress Report:**
-See [Dataset Collection Report](docs/week2/dataset_collection.md) for:
-- Grid Layout Experiments (3 rounds, root cause analysis)
-- Manual Capture Method (pilot test, all sessions)
-- Focus problem discovery and solution
-- Dataset V1 vs V2 comparison
-- Complete re-collection workflow
-
-**Next Steps:**
-1. ✅ Complete Dataset V2 re-collection (192 images)
-2. 📝 Annotation with Roboflow/LabelImg (YOLO format)
-3. 🧪 Train/Val split preparation
-4. 🚀 Start YOLO training (Week 3)
+**Revolutionary Changes:**
+1. ✅ **Mode 3 Only:** Modified `collect_dataset.py` to save full stereo dataset (Left + Right + Depth) exclusively
+2. ✅ **Hardware Config System:** Automatically saves `hardware_config.yaml` with **7 categories of camera parameters**
+3. ✅ **Complete Reproducibility:** Every session now has comprehensive hardware documentation
 
 ---
 
-**Last Updated:** Oct 29, 2025 04:30 PM
-**Status:** Ready to re-collect all sessions with improved focus quality!
+### 📊 Dataset Collection Progress
+
+**✅ Completed Sessions:**
+
+**Session 1a: Red Large (Oct 31)**
+- 🌶️ Peppers: 10 เม็ด
+- 📸 Images: 120 (10 × 12 angles)
+- 💾 Total files: 360 (120 left + 120 right + 120 depth)
+- ✅ Quality: Excellent (sharp, consistent)
+- ✅ hardware_config.yaml: Saved ✨
+
+**Session 1b: Red Small (Oct 31)**
+- 🌶️ Peppers: 7 เม็ด
+- 📸 Images: 84 (7 × 12 angles)
+- 💾 Total files: 252 (84 left + 84 right + 84 depth)
+- ✅ Quality: Excellent
+- ✅ hardware_config.yaml: Saved ✨
+
+**Session 2a: Red Rotten (Oct 31)**
+- 🌶️ Peppers: 7 เม็ด
+- 📸 Images: 84 (7 × 12 angles)
+- 💾 Total files: 252 (84 left + 84 right + 84 depth)
+- ✅ Quality: Excellent
+- ✅ hardware_config.yaml: Saved ✨
+
+**Session 2b: Red Wrinkled (Oct 31)**
+- 🌶️ Peppers: 3 เม็ด
+- 📸 Images: 37 (3 peppers, collected in rounds)
+- 💾 Total files: 111 (37 left + 37 right + 37 depth)
+- ✅ Quality: Excellent
+- ✅ hardware_config.yaml: Saved ✨
+
+**Session 2c: Red Deformed (Oct 31)**
+- 🌶️ Peppers: 7 เม็ด
+- 📸 Images: 84 (7 × 12 angles)
+- 💾 Total files: 252 (84 left + 84 right + 84 depth)
+- ✅ Quality: Excellent
+- ✅ hardware_config.yaml: Saved ✨
+
+**Session 2d: Red Insect (Oct 31)**
+- 🌶️ Peppers: 4 เม็ด
+- 📸 Images: 48 (4 × 12 angles)
+- 💾 Total files: 144 (48 left + 48 right + 48 depth)
+- ✅ Quality: Excellent
+- ✅ hardware_config.yaml: Saved ✨
+
+**Session 3a: Green Rotten (Oct 31 Afternoon)**
+- 🌶️ Peppers: 2 เม็ด
+- 📸 Images: 24 (2 × 12 angles)
+- 💾 Total files: 72 (24 left + 24 right + 24 depth)
+- ✅ Quality: Excellent
+- ✅ hardware_config.yaml: Saved ✨
+
+**Session 3b: Green Insect (Oct 31 Afternoon)**
+- 🌶️ Peppers: 1 เม็ด
+- 📸 Images: 12 (1 × 12 angles)
+- 💾 Total files: 36 (12 left + 12 right + 12 depth)
+- ✅ Quality: Excellent
+- ✅ hardware_config.yaml: Saved ✨
+
+**Session 3c: Green Medium V2 (Oct 31 Afternoon)**
+- 🌶️ Peppers: 11 เม็ด
+- 📸 Images: 132 (11 × 12 angles)
+- 💾 Total files: 396 (132 left + 132 right + 132 depth)
+- ✅ Quality: Excellent
+- ✅ hardware_config.yaml: Saved ✨
+
+**Session 3d: Green Small V2 (Oct 31 Afternoon)**
+- 🌶️ Peppers: 7 เม็ด
+- 📸 Images: 84 (7 × 12 angles)
+- 💾 Total files: 252 (84 left + 84 right + 84 depth)
+- ✅ Quality: Excellent
+- ✅ hardware_config.yaml: Saved ✨
+
+**📝 Optional Sessions:**
+- ⬜ Session 3e: Green Large (optional)
+- ⬜ Session 3f: Green Wrinkled/Deformed (optional)
+- ⬜ Session 4+: Yellow varieties (if available)
+
+**🎉 Major Milestone Achieved! (10 sessions complete)**
+
+**Current Total:**
+- 🌶️ **Red Peppers**: 38 เม็ด (6 sessions: Large, Small, Rotten, Wrinkled, Deformed, Insect) ✅
+- 🌶️ **Green Peppers**: 21 เม็ด (4 sessions: Rotten, Insect, Medium V2, Small V2) ✅
+- 📸 **Total Images**: 709 (457 red + 252 green)
+- 💾 **Total Files**: 2,127 (full stereo dataset: left + right + depth)
+- 📊 **Progress**: **71-142%** of target (500-1000 images) 🎉
+- 🎯 **Status**: **Excellent progress!** Ready for annotation or continue with Yellow varieties
+
+---
+
+### 🆕 Hardware Config System (New Feature!)
+
+**ไฟล์ใหม่:** `hardware_config.yaml` (auto-generated per session)
+
+**7 Categories of Camera Parameters:**
+1. ✅ **Exposure & Light Sensitivity** - exposure_ms (30), gain (2), aelock (true)
+2. ✅ **White Balance & Color** - wbmode (0/manual), awb_lock (true)
+3. ✅ **Image Enhancement** - brightness, contrast, gamma, sharpness (defaults)
+4. ✅ **Noise & Dynamic Range** - denoise, TNR, HDR (off)
+5. ✅ **Focus & Aperture** - Left (176.5), Right (171.0), manual mode
+6. ✅ **Frame & Timing** - FPS (15), resolution (1280×720), format (NV12→BGR)
+7. ✅ **External Lighting** - 3× LEDs (Top/Left/Right), positions, distances
+
+**Additional Info:**
+- Hardware Setup (baseline 60.57mm, focal length, camera height 320mm)
+- Environment (gray cloth background, working distance 23-35cm)
+- GStreamer Pipeline (complete pipeline string)
+- Stereo Calibration (pattern type, spacing 18mm)
+- Dataset Info (session name, save mode, depth range)
+
+**Documentation:** `HARDWARE_CONFIG_REFERENCE.md` (complete guide)
+
+**Benefits:**
+- 🔄 **Reproducibility:** ทำซ้ำการทดลองได้เป๊ะ
+- 📊 **Comparison:** เปรียบเทียบ sessions ได้
+- 🐛 **Debugging:** รู้ settings ทุกอย่าง
+- 📝 **Academic:** เขียน paper ได้สะดวก
+
+---
+
+### 🔧 Technical Improvements (Oct 31)
+
+**collect_dataset.py v2.0:**
+- ✅ **Mode 3 Only:** ไม่มี Mode 1, 2 อีกต่อไป (เก็บครบทุกอย่าง)
+- ✅ **Auto hardware_config:** บันทึกอัตโนมัติตอนเริ่ม session
+- ✅ **7 Parameter Categories:** ครบถ้วนตามมาตรฐาน Computer Vision
+- ✅ **No 's' key:** ไม่ต้องสลับ mode (ประหยัดเวลา)
+- ✅ **Error handling:** หยุดทำงานถ้าไม่มี calibration file
+
+**Rationale for Mode 3 Only:**
+> **"ถ้าไม่ทำพร้อมกัน พริกมันจะเน่าหมดก่อน"** - User insight
+- พริกมีอายุสั้น → ต้องเก็บ stereo data ตอนนี้
+- Week 3: YOLO training (ใช้ left images)
+- Week 4: 3D positioning (ต้องมี stereo pair!)
+- No second chance = เก็บครบตั้งแต่ครั้งแรก ✅
+
+---
+
+### 📁 File Structure (Per Session)
+
+```
+pepper_dataset/session1_red_large/
+├── metadata/
+│   ├── hardware_config.yaml      ← NEW! Complete hardware documentation
+│   └── collection_log.yaml       ← Per-image metadata (existing)
+├── raw/
+│   ├── left/                     ← For YOLO training (Week 3)
+│   ├── right/                    ← For stereo depth (Week 4)
+│   └── depth/                    ← Depth visualization
+```
+
+---
+
+### 🎯 Previous Discoveries & Fixes
+
+**Dataset V1 Issues (Oct 29):**
+- ⚠️ Auto-focus causing blurry images
+- ✅ Fixed: Added `aelock=true` to GStreamer pipeline
+- ✅ Result: 100% sharp images with visible texture
+
+**Key Learnings:**
+- ❌ Grid layout auto-crop = requires professional setup
+- ✅ Manual capture = reliable and fast (~4 min/pepper)
+- ✅ aelock=true = prevents focus drift
+- ✅ 3s countdown = allows hand removal + stabilization
+- 🎯 Dataset quality > speed
+
+**Workflow:**
+```
+Place pepper → Remove hand → Wait 3-5s → Press SPACE → Countdown 3s → Capture!
+```
+
+---
+
+### 📝 Tools Created (Week 2)
+
+**Collection Tools:**
+- `collect_dataset.py` v2.0 - Full mode with hardware_config
+- `prepare_dataset_structure.py` - YOLO format preparation
+- `test_aelock.py` - Focus stability testing
+
+**Documentation:**
+- `DATASET_COLLECTION_GUIDE.md` - Collection strategy
+- `DATASET_RECOLLECTION_GUIDE.md` - V2 guide
+- `HARDWARE_CONFIG_REFERENCE.md` - Complete parameter reference ✨
+
+**Scripts:**
+- `setup_new_dataset.sh` - Backup + create structure
+- `collect_all_commands.sh` - Quick reference
+
+---
+
+### 🎯 Next Steps
+
+**Immediate (Week 2):**
+1. ⏳ Complete remaining sessions (Red defects, Green varieties)
+2. 🎯 Target: 500-1000 images total
+
+**Week 3: YOLO Training**
+1. 📝 Annotation with Roboflow/LabelImg
+2. 🧪 Train/Val split (80/20)
+3. 🚀 Start YOLO training
+4. 📊 Model evaluation
+
+**Week 4: 3D Integration**
+1. 🔍 Use stereo pairs for depth
+2. 📐 3D positioning system
+3. 🎯 Complete vision pipeline
+
+---
+
+**Last Updated:** Oct 31, 2025 (Week 3 Started - CVAT Selected! 🎉)
+**Status:** 🟢 Week 3 Day 1 - Annotation tool: CVAT (Self-hosted) - Next: Docker installation
 
