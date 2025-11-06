@@ -1,0 +1,211 @@
+# Isaac-agri-robot .gitignore
+
+# ============================================
+# Python
+# ============================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# ============================================
+# Jupyter Notebook
+# ============================================
+.ipynb_checkpoints
+*.ipynb
+
+# ============================================
+# Virtual Environment
+# ============================================
+venv/
+ENV/
+env/
+.venv
+
+# ============================================
+# IDEs
+# ============================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# ============================================
+# PyTorch / Deep Learning
+# ============================================
+*.pth
+*.ckpt
+*.onnx
+# Keep only production models
+!models/detection/*.engine
+!models/detection/*.pt
+
+# ============================================
+# YOLO / Ultralytics
+# ============================================
+runs/
+wandb/
+# Keep only final trained model
+!runs/train/*/weights/best.*
+
+# ============================================
+# Datasets
+# ============================================
+data/pepper_dataset/
+data/images/
+data/labels/
+data/*.zip
+data/*.tar
+data/*.tar.gz
+
+# Keep only dataset config
+!data/data.yaml
+!data/.gitkeep
+!data/README.md
+
+# ============================================
+# Backup Folder
+# ============================================
+backup/
+backups/
+*.backup
+*.bak
+
+# ============================================
+# Temporary Files
+# ============================================
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Test outputs
+test_*.jpg
+test_*.png
+demo_*.jpg
+demo_*.png
+snapshot_*.jpg
+*_output.jpg
+*_comparison.jpg
+*_result.jpg
+*_enhanced.jpg
+
+# ============================================
+# Logs
+# ============================================
+*.log
+logs/
+*.log.*
+
+# ============================================
+# ROS2
+# ============================================
+install/
+log/
+build/
+*.bag
+*.db3
+
+# ============================================
+# Isaac ROS / Docker
+# ============================================
+.isaac_ros/
+isaac_ros_assets/
+docker/
+
+# ============================================
+# NVIDIA / Jetson
+# ============================================
+*.engine
+# Keep only production engines
+!models/detection/*.engine
+
+# ============================================
+# Video / Large Media
+# ============================================
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.flv
+*.wmv
+!docs/**/*.mp4  # Keep documentation videos
+
+# ============================================
+# Archives
+# ============================================
+*.zip
+*.tar
+*.tar.gz
+*.rar
+*.7z
+archive/
+old/
+
+# ============================================
+# System Files
+# ============================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ============================================
+# Credentials / Secrets
+# ============================================
+.env
+.env.*
+*.key
+*.pem
+credentials.json
+secrets/
+
+# ============================================
+# Documentation Build
+# ============================================
+docs/_build/
+docs/.doctrees/
+site/
+
+# ============================================
+# Coverage / Testing
+# ============================================
+.coverage
+.pytest_cache/
+htmlcov/
+.tox/
+.hypothesis/
+
+# ============================================
+# Keep These Important Files
+# ============================================
+!.gitkeep
+!README.md
+!LICENSE
+!requirements.txt
+!data.yaml
+!models/calibration/*.yaml

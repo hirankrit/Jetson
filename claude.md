@@ -2,7 +2,7 @@
 
 > Vision-based robot system for sorting peppers by quality, size, and color
 
-**Last Updated:** November 6, 2025 (Night) | Week 4 Day 1 ✅ Complete
+**Last Updated:** November 6, 2025 (Night) | Week 4 Day 1 ✅ Complete (ESS Tested!)
 **Full History:** [archive/claude_md_archive/claude_full_2025-11-04.md](archive/claude_md_archive/claude_full_2025-11-04.md) (4,546 lines)
 
 ---
@@ -177,11 +177,12 @@
 ### Week 4 Day 1 Summary 🎉
 
 **Major Achievements:**
-1. ✅ **Isaac ROS ESS** - Complete installation (31/31 packages)
+1. ✅ **Isaac ROS ESS** - Complete installation (31/31 packages) & TESTED! ⭐
 2. ✅ **IMX219 Camera** - Working with GStreamer workaround
 3. ✅ **Stereo Depth Pipeline** - StereoSGBM baseline established
-4. ✅ **Auto Preprocessing Library** - +359% improvement for cheap cameras! ⭐
-5. ✅ **New GitHub Repository** - [`Isaac-agri-robot`](https://github.com/hirankrit/Isaac-agri-robot) created
+4. ✅ **Auto Preprocessing Library** - +359% improvement for cheap cameras!
+5. ✅ **ESS vs SGBM Comparison** - 2.9x speedup (4.32 → 12 FPS) ⚡
+6. ✅ **New GitHub Repository** - [`Isaac-agri-robot`](https://github.com/hirankrit/Isaac-agri-robot) created
 
 **Key Innovation:**
 **Auto Preprocessing Library** (`stereo_preprocess.py`) makes cheap cameras (1800 THB IMX219) work like expensive ones!
@@ -195,9 +196,61 @@
 - `improve_stereo_depth.py` - Preprocessing comparison tool
 - `demo_auto_preprocess.py` - Usage examples
 - `capture_stereo_gst.sh` - GStreamer stereo capture script
+- `compare_ess_vs_sgbm.py` - ESS vs SGBM comparison tool ⭐ NEW!
+- `~/workspaces/isaac_ros-dev/test_ess.sh` - ESS Docker test script
+- `~/workspaces/isaac_ros-dev/camera_info.json` - ROS2 camera calibration
 - Migration plan: `NEW_REPO_PLAN.md`, README, .gitignore, requirements.txt
 
 **Status:** Production-ready 2D detection ✅ | 3D depth baseline ready ✅ | Ready for Week 4 Day 2! 🚀
+
+### Week 4 Day 1 (Evening) - Isaac ROS ESS Testing 🚀
+
+**Decision Point:** OpenCV CUDA vs Isaac ROS ESS First?
+
+**Analysis:**
+- OpenCV 4.12.0 currently has **NO CUDA support** (CPU only)
+- Options considered:
+  - A) Test ESS first (30-60 min) ⭐ **CHOSEN**
+  - B) Compile OpenCV CUDA (2-4 hours)
+
+**Why ESS First:**
+1. **Biggest Impact:** ESS = 10x speedup expected
+2. **Already Installed:** 31/31 packages ready ✅
+3. **Lower Risk:** Won't break PyTorch/TensorRT setup
+4. **Smart Strategy:** Test bottleneck first before optimizing preprocessing
+5. **Time-Efficient:** May not need OpenCV CUDA if ESS is fast enough (30+ FPS)
+
+---
+
+**Isaac ROS ESS Test Results** ✅
+
+**Test Setup:**
+- Images: IMX219 stereo (1280×720) → Resized to 960×576 for ESS
+- Engine: `/isaac_ros_assets/models/dnn_stereo_disparity/dnn_stereo_disparity_v4.1.0_onnx/ess.engine`
+- Calibration: `stereo_calib.yaml` (59.95mm baseline)
+- Container: Docker `isaac_ros_dev-aarch64` with ROS2 Humble
+
+**Performance Comparison:**
+
+| Method | Processing Time | FPS | Valid Pixels | Platform | Algorithm |
+|--------|----------------|-----|--------------|----------|-----------|
+| **StereoSGBM** | 0.231s | 4.32 | 29.69% | CPU | Classical SGBM |
+| **Isaac ROS ESS** | ~0.08s | ~12 | Unknown* | GPU (TensorRT) | DNN-based |
+
+**Speedup:** 2.9x faster (0.231s → 0.08s)
+
+**Key Findings:**
+1. ✅ **ESS works!** Successfully processed stereo images
+2. ⚡ **2.9x speedup** - Faster but not 10x as expected
+3. ❓ **Quality unknown** - Only got visualization output, not raw disparity
+4. 📊 **Resolution:** ESS uses 960×576 (not full 1280×720)
+5. 🎯 **Good enough for real-time** - 12 FPS sufficient for robot control
+
+**Why not 10x faster?**
+- Input images downsampled (1280×720 → 960×576)
+- Includes preprocessing overhead
+- Measurement from logs (not precise benchmark)
+- StereoSGBM is already optimized (not 18 FPS baseline)
 
 ### Week 4 Next Steps
 
@@ -205,13 +258,16 @@
 2. ✅ **Fix IMX219 camera** - Working with GStreamer
 3. ✅ **Test stereo depth** - StereoSGBM baseline established
 4. ✅ **Create preprocessing library** - Auto preprocessing ready
-5. 🔄 **Camera calibration planning** - Equipment list prepared
-6. ⏳ **Tomorrow (Day 2):**
+5. ✅ **GPU optimization decision** - ESS first, OpenCV CUDA if needed
+6. 🔄 **Camera calibration planning** - Equipment list prepared
+7. 🔄 **NOW: Testing Isaac ROS ESS** (started Nov 6 evening)
+8. ⏳ **Tomorrow (Day 2):**
+   - Complete ESS integration & benchmarking
+   - Decide on OpenCV CUDA based on ESS results
    - Re-calibrate IMX219 camera
    - Test with real peppers
-   - Test Isaac ROS ESS (DNN-based depth)
    - Integrate: YOLO11n + ESS depth → 3D coordinates
-7. ✅ **Repository Migration Started:**
+9. ✅ **Repository Migration Started:**
    - ✅ Created new repo: [`Isaac-agri-robot`](https://github.com/hirankrit/Isaac-agri-robot)
    - ✅ Professional README.md (336 lines) with complete documentation
    - ✅ Initial commit pushed to GitHub

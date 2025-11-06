@@ -1,0 +1,93 @@
+# Isaac-agri-robot Python Dependencies
+# For NVIDIA Jetson Orin Nano with JetPack 6.2.1
+
+# ============================================
+# Core Deep Learning (NVIDIA Official Builds)
+# ============================================
+# PyTorch: Use NVIDIA's official build for Jetson
+# Installation: Download from https://developer.nvidia.com/embedded/downloads
+# torch==2.5.0a0+872d972e41.nv24.08  # NVIDIA build (install manually)
+# torchvision==0.20.0a0+afc54f7      # Build from source (install manually)
+
+# ============================================
+# Computer Vision
+# ============================================
+opencv-python==4.10.0.84
+opencv-contrib-python==4.10.0.84
+numpy==1.26.4
+Pillow==10.4.0
+
+# ============================================
+# YOLO / Ultralytics
+# ============================================
+ultralytics==8.3.223
+
+# Ultralytics dependencies
+matplotlib>=3.3.0
+scipy>=1.4.1
+tqdm>=4.64.0
+psutil
+py-cpuinfo
+pyyaml>=5.3.1
+requests>=2.23.0
+pandas>=1.1.4
+seaborn>=0.11.0
+
+# ============================================
+# TensorRT (Included in JetPack)
+# ============================================
+# tensorrt==10.3.0  # Already installed with JetPack
+
+# ============================================
+# ROS2 (Install via apt, not pip)
+# ============================================
+# ros-humble-*  # Install via: sudo apt install ros-humble-desktop
+
+# ============================================
+# Isaac ROS (Build from source)
+# ============================================
+# See: docs/setup/isaac_ros_setup.md
+
+# ============================================
+# Utilities
+# ============================================
+pyyaml>=6.0
+typing-extensions>=4.0.0
+
+# ============================================
+# Optional (For development)
+# ============================================
+# pytest>=7.0.0
+# black>=22.0.0
+# flake8>=5.0.0
+# mypy>=1.0.0
+
+# ============================================
+# Installation Notes
+# ============================================
+# 1. PyTorch: Must use NVIDIA's official build
+#    wget https://developer.download.nvidia.com/compute/redist/jp/v62/pytorch/torch-2.5.0a0+872d972e41.nv24.08.17622132-cp310-cp310-linux_aarch64.whl
+#    pip3 install torch-2.5.0a0+872d972e41.nv24.08.17622132-cp310-cp310-linux_aarch64.whl
+#
+# 2. torchvision: Build from source with CUDA support
+#    git clone https://github.com/pytorch/vision torchvision
+#    cd torchvision
+#    git checkout v0.20.0
+#    export BUILD_VERSION=0.20.0
+#    python3 setup.py install
+#
+# 3. TensorRT: Already included in JetPack 6.2.1
+#
+# 4. ROS2 Humble:
+#    sudo apt install ros-humble-desktop
+#
+# 5. Isaac ROS: Follow docs/setup/isaac_ros_setup.md
+#
+# 6. CUDA Toolkit: Already included in JetPack 6.2.1
+#    CUDA 12.6.68
+#    cuDNN 9.3.0
+#
+# ============================================
+# Quick Install (after PyTorch setup)
+# ============================================
+# pip3 install -r requirements.txt

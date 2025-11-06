@@ -1,6 +1,6 @@
 # Claude Code Skills
 
-**Last Updated**: 2025-10-23
+**Last Updated**: 2025-11-06
 
 Claude Skills คือชุดคำสั่งเล็กๆ (lightweight instructions) ที่สอน Claude Code CLI ให้ทำงานเฉพาะทางได้สม่ำเสมอและมีมาตรฐานเดียวกัน
 
@@ -17,7 +17,9 @@ Skills ทั้งหมดเก็บอยู่ที่: `.claude/skills/`
         ├── thai-commit.md       # สร้าง commit message ภาษาไทย
         ├── weekly-report.md     # สร้างรายงานประจำสัปดาห์
         ├── ros2-review.md       # รีวิวโค้ด ROS2 + Python
-        └── python-tools.md      # เครื่องมือ lint, type check, logging
+        ├── python-tools.md      # เครื่องมือ lint, type check, logging
+        ├── step-by-step.md      # การสื่อสารแบบทีละขั้นตอน
+        └── update-claude-md.md  # จัดการไฟล์ claude.md
 ```
 
 ---
@@ -194,6 +196,132 @@ black src/ && flake8 src/ && mypy src/
 
 ---
 
+### 5. Step-by-Step Communication (`step-by-step.md`)
+
+**วัตถุประสงค์**: สื่อสารและให้คำแนะนำแบบทีละขั้นตอนเพื่อไม่ให้ผู้ใช้สับสนหรือพลาดขั้นตอน
+
+**หลักการสำคัญ**:
+
+#### ✅ ควรทำ:
+1. **ให้ทีละขั้นตอน** - บอกแค่ขั้นตอนถัดไปที่ต้องทำ
+2. **ทำเลยถ้าทำได้** - งานที่ชัดเจน (แก้ code, รันทดสอบ, เช็คไฟล์) ทำเลยไม่ต้องถาม
+3. **รอผู้ใช้เฉพาะงานที่ต้องมนุษย์** - เช่น ถ่ายภาพ, วัดระยะ, ตัดสินใจเลือก
+4. **กระชับ ชัดเจน** - ใช้ภาษาสั้นๆ เข้าใจง่าย
+5. **แก้ไข code โดยตรง** - ใช้ Edit tool แก้เลย ไม่ต้องใช้ nano หรือถามผู้ใช้
+6. **รันคำสั่งที่ปลอดภัย** - Bash, Read, Grep, Edit ทำได้เลย
+
+#### ❌ หลีกเลี่ยง:
+1. **ห้ามให้หลายขั้นตอนพร้อมกัน** - ผู้ใช้จะดูแค่อันสุดท้ายและพลาดขั้นตอนก่อนหน้า
+2. **ห้ามอธิบายยาว** - ไม่ต้องให้ background, tips, troubleshooting ถ้าไม่ถาม
+3. **ห้ามให้ทางเลือกเยอะ** - เลือกทางที่ดีที่สุดให้เลย
+4. **ห้ามคาดการณ์ล่วงหน้า** - ไม่ต้องบอกว่าขั้นต่อไปจะทำอะไร
+
+**รูปแบบการตอบมาตรฐาน**:
+```markdown
+## ขั้นตอนถัดไป
+
+[คำอธิบายสั้นๆ 1 บรรทัด]
+
+[คำสั่ง/วิธีทำ]
+
+[บอกว่าต้องรอผลอะไร]
+```
+
+**งานที่ทำได้เลย (ไม่ต้องถาม)**:
+- ✅ แก้ไข code (ใช้ Edit tool)
+- ✅ รันคำสั่งอ่าน (Read, Grep, Glob, ls)
+- ✅ รันโปรแกรมทดสอบ (python3 test_*.py)
+- ✅ เช็คผลลัพธ์ (ดู output, compare ค่า)
+- ✅ สร้าง/ลบไฟล์ชั่วคราว
+- ✅ อัพเดตเอกสาร
+
+**งานที่ต้องรอผู้ใช้**:
+- ⏸️ ถ่ายภาพ (ต้องจัดมุมกล้อง)
+- ⏸️ วัดระยะ (ต้องใช้ไม้บรรทัด)
+- ⏸️ ปรับ hardware (focus กล้อง, วางวัตถุ)
+- ⏸️ ตัดสินใจสำคัญ (เลือก approach, ยืนยันลบข้อมูล)
+
+**ตัวอย่างการใช้**:
+```bash
+# กรณีที่ผู้ใช้บอก "ลอง spacing 18mm"
+# Claude จะ: [แก้ไข code] → [รันทดสอบ] → [แสดงผล] → [ถามต่อ]
+```
+
+**เมื่อใช้ Skill นี้**: ใช้ทุกครั้งที่ให้คำแนะนำทีละขั้นตอน, งานหลายขั้นตอนต่อเนื่อง, หรือผู้ใช้บอกว่าสับสน
+
+---
+
+### 6. Claude.md Management (`update-claude-md.md`)
+
+**วัตถุประสงค์**: จัดการและอัพเดต claude.md อย่างมีประสิทธิภาพ
+
+**หลักการ**:
+1. **claude.md = Overview + Quick Reference**
+   - เก็บข้อมูลสำคัญ, quick start, roadmap
+   - ไม่เก็บ detailed progress (ให้ลิงก์ไปไฟล์แยก)
+   - เป้าหมาย: 1,500-2,000 บรรทัด MAX
+
+2. **docs/weekX/ = Detailed Progress**
+   - เก็บ progress แต่ละสัปดาห์แยกกันไป
+   - เขียนละเอียดได้ไม่จำกัด
+
+3. **Archive เก่า → ไฟล์แยก**
+   - Progress เก่า ≥ 1 สัปดาห์ → ย้ายไป docs/
+   - claude.md เก็บแค่ลิงก์
+
+**โครงสร้างไฟล์แนะนำ**:
+```
+Project/
+├── claude.md                          (1,500-2,000 บรรทัด MAX)
+│   ├── Quick Start
+│   ├── Phase Overview
+│   ├── Current Week Progress (summary)
+│   └── Links to detailed docs
+│
+└── docs/
+    ├── week1/
+    │   ├── stereo_calibration.md
+    │   └── progress_summary.md
+    ├── week2/
+    │   ├── dataset_collection.md
+    │   └── grid_layout_experiment.md
+    └── week3/
+        └── (future)
+```
+
+**Template: Week Progress Section**:
+```markdown
+## 📅 Week 2: Dataset Collection (Oct 28-Nov 3, 2025)
+
+**Status:** 🟡 In Progress (50% complete)
+
+**Key Achievements:**
+- ✅ Grid Layout Auto Crop - Tested (failed, but learned)
+- ✅ Manual Capture - Success (96 images, 9 minutes)
+- 🟡 Defect Types - In progress (Session 2.1/2.4)
+
+**Detailed Progress:**
+- [Dataset Collection Report](docs/week2/dataset_collection.md)
+- [Grid Layout Experiments](docs/week2/grid_layout_experiment.md)
+
+**Next Steps:**
+- Complete Session 2-3 (defect types + green peppers)
+- Annotation with Roboflow
+```
+
+**เมื่อไหร่ควร Archive**:
+- ✅ เมื่อจบสัปดาห์ (Week X เสร็จแล้ว)
+- ✅ เมื่อ claude.md > 1,800 บรรทัด
+- ✅ เมื่อเริ่ม Week ใหม่
+
+**Benefits**:
+- claude.md กระชับ - อ่านง่าย, โหลดเร็ว
+- Progress มีโครงสร้าง - แยกตาม week
+- ค้นหาง่าย - รู้ว่าข้อมูลอยู่ไฟล์ไหน
+- Scale ได้ - เพิ่ม week ใหม่ไม่กระทบเก่า
+
+---
+
 ## 🚀 วิธีใช้งาน Skills
 
 ### วิธีที่ 1: เรียกใช้ Skill โดยตรง
@@ -333,6 +461,8 @@ code .claude/skills/thai-commit.md
 
 | Date | Skill | Change |
 |------|-------|--------|
+| 2025-11-06 | `update-claude-md.md` | สร้าง skill ใหม่ - จัดการ claude.md แบบมีโครงสร้าง |
+| 2025-11-06 | `step-by-step.md` | สร้าง skill ใหม่ - การสื่อสารแบบทีละขั้นตอน |
 | 2025-10-23 | `python-tools.md` | สร้าง skill ใหม่ - linting, type check, logging |
 | 2025-10-23 | `ros2-review.md` | ขยายความ Python Code Quality |
 | 2025-10-23 | `weekly-report.md` | สร้าง skill ใหม่ |
